@@ -1,162 +1,493 @@
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Finery Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      --bg: #160C10;
+      --bg2: #1E1015;
+      --surf: #241319;
+      --surf2: #2C1820;
+      --line: #3A2129;
+      --line2: #4A2A34;
+      --burg: #761D35;
+      --burg-d: #5C1628;
+      --burg-l: #9B3A52;
+      --gold: #B8922E;
+      --gold-l: #D8B34E;
+      --gold-g: #E4C76A;
+      --ivory: #FAF4F0;
+      --blush: #F0DFE3;
+      --muted: #B79AA2;
+      --muted2: #8A6F77;
+      --good: #5FB28A;
+      --warn: #E08B3D;
+      --bad: #D96A78;
+      --r: 16px;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Inter Tight', system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 12% -8%, rgba(118,29,53,.32), transparent 60%), radial-gradient(1000px 700px at 105% 0%, rgba(184,146,46,.10), transparent 55%), var(--bg);
+      color: var(--ivory);
+      padding: clamp(14px, 2.4vw, 30px);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    
+    .num { font-family: 'Space Grotesk', monospace; font-variant-numeric: tabular-nums; }
+    .wrap { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 190px 1fr; gap: 22px; }
+    .wrap > header, .wrap > .brief, .wrap > .kpis, .wrap > footer { grid-column: 1 / -1; }
+    
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; flex-direction: column; gap: 4px; }
+    .eyebrow { font-size: 11px; letter-spacing: .42em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+    .title { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(28px, 4.4vw, 46px); line-height: 1; color: var(--ivory); }
+    .title b { color: var(--gold-g); font-style: italic; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .meta { text-align: right; font-size: 12px; color: var(--muted); }
+    .meta .live { display: inline-flex; align-items: center; gap: 7px; color: var(--gold-l); font-weight: 600; letter-spacing: .04em; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-g); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(228,199,106,.55); } 70% { box-shadow: 0 0 0 9px rgba(228,199,106,0); } }
+    .meta .src { margin-top: 5px; color: var(--muted2); font-size: 11px; }
+    
+    .brief { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 16px; }
+    .brief-card { background: linear-gradient(160deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+    .brief-tag { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; font-weight: 600; }
+    .brief-signal { border-left: 3px solid var(--gold); }
+    .brief-signal .brief-tag { color: var(--gold-l); }
+    .brief-risk { border-left: 3px solid var(--bad); }
+    .brief-risk .brief-tag { color: var(--bad); }
+    .brief-card .lead { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ivory); }
+    .brief-card .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+    .brief-card .desc b { color: var(--blush); font-weight: 600; }
+    
+    .kpis { display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .kpi { background: linear-gradient(165deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; position: relative; overflow: hidden; }
+    .kpi.hero { background: linear-gradient(150deg, var(--burg-d), #2A0F1A 70%); border: 1px solid var(--burg-l); }
+    .kpi.hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(420px 180px at 110% -30%, rgba(228,199,106,.25), transparent 60%); pointer-events: none; }
+    .kpi .klabel { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .kpi.hero .klabel { color: var(--gold-g); }
+    .kpi .kval { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: clamp(22px, 2.7vw, 30px); margin-top: 9px; color: var(--ivory); letter-spacing: -.02em; }
+    .kpi.hero .kval { color: #fff; font-size: clamp(26px, 3.4vw, 38px); }
+    .kpi .ksub { font-size: 11.5px; color: var(--muted); margin-top: 7px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .kpi.hero .ksub { color: var(--blush); }
+    .baht { font-size: .62em; color: var(--gold-l); font-family: 'Inter Tight'; font-weight: 600; margin-right: 3px; vertical-align: .06em; }
+    .kpi.hero .baht { color: var(--gold-g); }
+    
+    .grid { display: grid; gap: 14px; margin-top: 14px; }
+    .g2 { grid-template-columns: 1.7fr 1fr; }
+    .card { background: linear-gradient(168deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+    .card h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; color: var(--ivory); display: flex; align-items: center; gap: 9px; }
+    .card h3 .ix { font-family: 'Space Grotesk'; font-size: 11px; color: var(--gold); font-weight: 600; border: 1px solid var(--line2); border-radius: 6px; padding: 2px 6px; letter-spacing: .05em; }
+    .card .csub { font-size: 11.5px; color: var(--muted2); margin-top: 3px; margin-bottom: 12px; }
+    
+    .chartbox { position: relative; height: 300px; margin-top: 6px; }
+    .chartbox.sm { height: 240px; }
+    
+    .latest { background: linear-gradient(150deg, rgba(184,146,46,.14), transparent 55%), linear-gradient(168deg, var(--surf2), var(--bg2)); border: 1px solid var(--gold); border-radius: var(--r); padding: 18px; position: relative; overflow: hidden; }
+    .latest::before { content: ""; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(228,199,106,.18), transparent 70%); }
+    .latest .lt { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .latest .tag { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-g); font-weight: 700; }
+    .latest .lbadge { font-size: 10.5px; color: var(--bg); background: var(--gold-g); font-weight: 700; padding: 3px 9px; border-radius: 20px; letter-spacing: .03em; }
+    .latest .ldate { font-family: 'Fraunces', serif; font-size: 15px; color: var(--blush); margin-top: 10px; font-weight: 500; }
+    .latest .lbig { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: clamp(30px, 5vw, 44px); color: #fff; margin-top: 2px; letter-spacing: -.02em; }
+    .latest .lbig .baht { font-size: .5em; color: var(--gold-g); font-family: 'Inter Tight'; font-weight: 700; vertical-align: .12em; margin-right: 4px; }
+    .latest .lrow { display: flex; justify-content: space-between; font-size: 12.5px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); }
+    .latest .lrow:first-of-type { margin-top: 12px; }
+    .latest .lrow span:first-child { color: var(--muted); }
+    .latest .lrow span:last-child { font-family: 'Space Grotesk'; font-weight: 600; color: var(--ivory); }
+    
+    .tablewrap { overflow-x: auto; margin-top: 4px; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+    th { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted2); font-weight: 600; text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line2); position: sticky; top: 0; background: var(--surf); }
+    th:first-child { text-align: left; }
+    td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.045); text-align: right; font-family: 'Space Grotesk'; font-weight: 500; color: var(--blush); }
+    td:first-child { text-align: left; font-family: 'Inter Tight'; color: var(--muted); font-weight: 500; }
+    tr:hover td { background: rgba(184,146,46,.05); }
+    td.tot { color: var(--gold-l); font-weight: 600; }
+    td.zero { color: var(--muted2); opacity: .5; }
+    tr.newest td { background: rgba(184,146,46,.10); }
+    tr.newest td:first-child { color: var(--gold-g); font-weight: 600; }
+    
+    .side-tabs { grid-column: 1/2; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(168deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; align-self: start; }
+    .stab { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: none; background: transparent; color: var(--muted); cursor: pointer; text-align: left; font-family: 'Inter Tight'; font-size: 12.5px; font-weight: 600; transition: .16s; width: 100%; }
+    .stab:hover { background: rgba(184,146,46,.10); color: var(--blush); }
+    .stab.active { background: linear-gradient(135deg, var(--burg), var(--burg-d)); color: var(--ivory); box-shadow: 0 0 0 1px rgba(184,146,46,.35) inset; }
+    .stab-ic { font-family: 'Space Grotesk'; font-size: 10px; font-weight: 700; color: var(--gold-l); border: 1px solid var(--line2); border-radius: 6px; padding: 2px 6px; flex-shrink: 0; min-width: 24px; text-align: center; }
+    .stab.active .stab-ic { color: var(--gold-g); border-color: rgba(255,255,255,.25); }
+    .stab-tx { white-space: nowrap; }
+    
+    .tab-content { grid-column: 2/3; min-width: 0; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: tabIn .22s ease; }
+    @keyframes tabIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    
+    footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted2); }
+    
+    @media (max-width: 920px) {
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .g2 { grid-template-columns: 1fr; }
+      .brief { grid-template-columns: 1fr; }
+    }
+    
+    @media (max-width: 860px) {
+      .wrap { grid-template-columns: 1fr; }
+      .side-tabs { position: sticky; top: 0; z-index: 20; flex-direction: row; overflow-x: auto; gap: 6px; padding: 8px; margin-bottom: 2px; }
+      .stab { flex-direction: column; gap: 4px; padding: 8px 10px; min-width: 74px; text-align: center; }
+      .stab-tx { font-size: 10.5px; white-space: normal; line-height: 1.15; }
+      .tab-content { grid-column: 1 / -1; }
+    }
+    
+    @media (max-width: 560px) {
+      .kpis { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="eyebrow">Offline Retail</span>
+      <h1 class="title">THE <b>FINERY</b></h1>
+      <div class="subtitle">Daily Sales Update — รายงานยอดขายหน้าร้าน</div>
+    </div>
+    <div class="meta">
+      <div class="live"><span class="dot"></span>LIVE · Auto-update</div>
+      <div id="updated"></div>
+      <div class="src">ที่มา: Google Sheet → data.json</div>
+    </div>
+  </header>
+
+  <div class="brief">
+    <div class="brief-card brief-signal" style="min-width: 260px;">
+      <span class="brief-tag">Signal · โฟกัสวันนี้</span>
+      <span class="lead" id="sig-lead">📊 กำลังโหลด...</span>
+      <span class="desc" id="sig-desc"></span>
+    </div>
+    <div class="brief-card brief-risk">
+      <span class="brief-tag">⚠ Exception · ต้องจับตา</span>
+      <span class="lead" id="risk-lead">✅ กำลังตรวจสอบ...</span>
+      <span class="desc" id="risk-desc"></span>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis">
+    <div class="kpi hero">
+      <div class="klabel">กำลังโหลดข้อมูล...</div>
+      <div class="kval">⏳</div>
+    </div>
+  </div>
+
+  <nav class="side-tabs" id="sideTabs">
+    <button class="stab active" data-tab="overview"><span class="stab-ic">01</span><span class="stab-tx">ภาพรวม</span></button>
+    <button class="stab" data-tab="daily"><span class="stab-ic">03</span><span class="stab-tx">รายวัน</span></button>
+    <button class="stab" data-tab="insights"><span class="stab-ic">IN</span><span class="stab-tx">Insights</span></button>
+  </nav>
+
+  <div class="tab-content">
+    <div class="tab-panel active" data-tabpanel="overview">
+      <div class="grid g2">
+        <div class="card">
+          <h3><span class="ix">01</span> แนวโน้มรายเดือน</h3>
+          <div class="csub">ธ.ค. 2025 – มิ.ย. 2026 · แยกตามสาขา</div>
+          <div class="chartbox"><canvas id="monthly"></canvas></div>
+        </div>
+        <div class="card">
+          <h3><span class="ix">02</span> สัดส่วนยอดขาย</h3>
+          <div class="csub">รวมทั้งงวด</div>
+          <div class="chartbox sm"><canvas id="share"></canvas></div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="ix">★</span> Top 3 สาขา</h3>
+          <div class="csub" style="margin-bottom: 14px;">จัดอันดับจากยอดรวม</div>
+          <div id="rankList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tabpanel="daily">
+      <div class="grid g2">
+        <div class="card">
+          <h3><span class="ix">03</span> ยอดขายรายวัน · 30 วันล่าสุด</h3>
+          <div class="csub">กราฟแนวโน้ม</div>
+          <div class="chartbox"><canvas id="daily"></canvas></div>
+        </div>
+        <div class="latest" id="latest">
+          <div class="lt">
+            <span class="tag">ยอดล่าสุด</span>
+            <span class="lbadge" id="latestBadge">-</span>
+          </div>
+          <div id="latestContent"></div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="ix">04</span> รายวันล่าสุด · 14 วัน</h3>
+          <div class="csub">แยกตามสาขา (บาท)</div>
+          <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tabpanel="insights">
+      <div class="card" style="margin-top: 14px;">
+        <h3><span class="ix">IN</span> Insights & Analysis</h3>
+        <div class="csub" style="margin-bottom: 14px;">ข้อมูลเชิงลึกจากยอดขายล่าสุด</div>
+        <div id="insightContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>The Finery · CDG Retail Analytics</span>
+    <span id="foot-tot">—</span>
+  </footer>
+</div>
+
 <script>
 // ============================================
-// FETCH & PARSE data.json
+// FETCH & PARSE
 // ============================================
-async function fetchAndParseData() {
+async function loadDashboard() {
   try {
     const response = await fetch('./data.json');
-    if (!response.ok) throw new Error('Failed to fetch data.json');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const jsonData = await response.json();
     
-    console.log('✅ data.json loaded successfully');
-    console.log('Data rows:', jsonData.data.length);
+    const DATA = parseData(jsonData.data);
+    renderDashboard(DATA);
     
-    return parseDataToDATA(jsonData.data);
   } catch (error) {
-    console.error('❌ Error loading data:', error);
-    document.body.innerHTML = '<h1>Error loading dashboard data</h1><p>Could not fetch data.json. Please check the file exists.</p>';
-    return null;
+    console.error('❌ Error:', error);
+    document.getElementById('kpis').innerHTML = `<div class="card" style="grid-column:1/-1;color:var(--bad)">❌ Error loading data: ${error.message}</div>`;
   }
 }
 
-function parseDataToDATA(rawData) {
+function parseData(rawData) {
   const STORES = [
-    {key:'lad', name:'Central Ladprao', index:2, color:'#9B3A52'},
-    {key:'pin', name:'Central Pinklao', index:3, color:'#D96A78'},
-    {key:'par', name:'Siam Paragon', index:4, color:'#E08B3D'},
-    {key:'cw',  name:'Central World', index:5, color:'#5FB28A'},
-    {key:'emp', name:'Emporium', index:6, color:'#B79AA2'},
+    {key: 'lad', name: 'Central Ladprao', idx: 2, color: '#9B3A52'},
+    {key: 'pin', name: 'Central Pinklao', idx: 3, color: '#D96A78'},
+    {key: 'par', name: 'Siam Paragon', idx: 4, color: '#E08B3D'},
+    {key: 'cw', name: 'Central World', idx: 5, color: '#5FB28A'},
+    {key: 'emp', name: 'Emporium', idx: 6, color: '#B79AA2'},
   ];
   
   const daily = [];
+  const months = ['Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026'];
   const monthlyData = {};
   
-  STORES.forEach(s => {
-    monthlyData[s.name] = [];
-  });
+  STORES.forEach(s => monthlyData[s.name] = [0,0,0,0,0,0,0]);
   
+  // Parse daily data
   rawData.slice(2).forEach(row => {
     if (!row[0] || row[0].includes('Data will')) return;
-    
-    const date = row[0];
-    const obj = { date, tot: 0 };
-    
+    const d = {date: row[0], tot: 0};
     STORES.forEach(s => {
-      const val = parseFloat(row[s.index]) || 0;
-      obj[s.key] = val;
-      obj.tot += val;
+      const v = parseFloat(row[s.idx]) || 0;
+      d[s.key] = v;
+      d.tot += v;
     });
-    
-    if (obj.tot > 0) daily.push(obj);
+    if (d.tot > 0) daily.push(d);
   });
   
-  const months = ['December 2025', 'January 2026', 'February 2026', 'March 2026', 'April 2026', 'May 2026', 'June 2026'];
-  
+  // Build monthly
   daily.forEach(d => {
     const dateObj = new Date(d.date);
-    const month = dateObj.getMonth();
-    const year = dateObj.getFullYear();
-    
-    let monthIdx = -1;
-    if (year === 2025 && month === 11) monthIdx = 0;
-    else if (year === 2026) monthIdx = month + 1;
-    
-    if (monthIdx >= 0 && monthIdx < months.length) {
-      STORES.forEach(s => {
-        if (!monthlyData[s.name][monthIdx]) monthlyData[s.name][monthIdx] = 0;
-        monthlyData[s.name][monthIdx] += d[s.key];
-      });
+    const m = dateObj.getMonth();
+    const y = dateObj.getFullYear();
+    let idx = -1;
+    if (y === 2025 && m === 11) idx = 0;
+    else if (y === 2026) idx = m + 1;
+    if (idx >= 0 && idx < 7) {
+      STORES.forEach(s => monthlyData[s.name][idx] += d[s.key]);
     }
   });
   
-  months.forEach((m, idx) => {
-    STORES.forEach(s => {
-      if (!monthlyData[s.name][idx]) monthlyData[s.name][idx] = 0;
-    });
-  });
-  
-  return {
-    months,
-    monthly: monthlyData,
-    daily,
-    timestamp: new Date().toLocaleString('th-TH'),
-    STORES
-  };
+  return {months, monthlyData, daily, STORES};
 }
 
-// ============================================
-// CHART CONFIG
-// ============================================
-const chartDefaults = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { labels: { font: {family: "'Space Grotesk'"}, color: '#B79AA2', boxWidth: 12, padding: 12 } },
-    filler: { propagate: true }
-  },
-  scales: {
-    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8A6F77', font: {size: 11} } },
-    y: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#8A6F77', font: {family: "'Space Grotesk'"} } }
+function renderDashboard(DATA) {
+  const totalRev = DATA.daily.reduce((a, d) => a + d.tot, 0);
+  
+  // KPIs
+  document.getElementById('updated').innerHTML = `<b style="color:var(--blush)">${new Date().toLocaleString('th-TH')}</b>`;
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi hero">
+      <div class="klabel">ยอดรวม · ทั้งงวด</div>
+      <div class="kval"><span class="baht">฿</span>${(totalRev/1e6).toFixed(2)}M</div>
+      <div class="ksub">${DATA.daily.length} วัน · 5 สาขา</div>
+    </div>
+    <div class="kpi">
+      <div class="klabel">เฉลี่ยต่อวัน</div>
+      <div class="kval"><span class="baht">฿</span>${(totalRev/DATA.daily.length/1000).toFixed(0)}K</div>
+    </div>
+    <div class="kpi">
+      <div class="klabel">Max Day</div>
+      <div class="kval"><span class="baht">฿</span>${(Math.max(...DATA.daily.map(d=>d.tot))/1000).toFixed(0)}K</div>
+    </div>
+    <div class="kpi">
+      <div class="klabel">Min Day</div>
+      <div class="kval"><span class="baht">฿</span>${(Math.min(...DATA.daily.filter(d=>d.tot>0).map(d=>d.tot))/1000).toFixed(0)}K</div>
+    </div>
+  `;
+  
+  // Signal & Risk
+  const last3 = DATA.daily.slice(-3);
+  const last7 = DATA.daily.slice(-10, -3);
+  const avg3 = last3.reduce((a,d)=>a+d.tot,0)/3;
+  const avg7 = last7.reduce((a,d)=>a+d.tot,0)/7 || avg3;
+  
+  if (avg3 > avg7 * 1.1) {
+    document.getElementById('sig-lead').textContent = '📈 ยอดขายเพิ่มขึ้น';
+    document.getElementById('sig-desc').innerHTML = `ยอดเฉลี่ย 3 วันล่าสุดเพิ่มขึ้น <b>${((avg3/avg7-1)*100).toFixed(0)}%</b>`;
   }
-};
+  
+  if (DATA.daily[DATA.daily.length-1].tot < avg7 * 0.7) {
+    document.getElementById('risk-lead').textContent = '⚠️ ยอดต่ำกว่าค่าเฉลี่ย';
+    document.getElementById('risk-desc').innerHTML = `<b>วันล่าสุด</b> ต่ำกว่าค่าเฉลี่ยสัปดาห์ ${((1-DATA.daily[DATA.daily.length-1].tot/avg7)*100).toFixed(0)}%`;
+  }
+  
+  // Top 3
+  const ranked = DATA.STORES.map(s => ({
+    name: s.name,
+    tot: DATA.monthlyData[s.name].reduce((a,b)=>a+b,0),
+    color: s.color
+  })).sort((a,b)=>b.tot-a.tot);
+  
+  document.getElementById('rankList').innerHTML = ranked.map((s,i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:#160C10">${i+1}</div>
+        <span>${s.name}</span>
+      </div>
+      <div style="font-family:'Space Grotesk';font-weight:600;color:var(--gold-l)">฿${(s.tot/1e6).toFixed(2)}M</div>
+    </div>
+  `).join('');
+  
+  // Charts
+  buildCharts(DATA);
+  
+  // Latest
+  const lastDay = DATA.daily[DATA.daily.length-1];
+  const lastDate = new Date(lastDay.date);
+  document.getElementById('latestBadge').textContent = lastDate.toLocaleDateString('th-TH', {weekday:'short'});
+  document.getElementById('latestContent').innerHTML = `
+    <div class="ldate">${lastDate.toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'})}</div>
+    <div class="lbig"><span class="baht">฿</span>${(lastDay.tot/1000).toFixed(0)}K</div>
+    ${DATA.STORES.map(s => `<div class="lrow"><span>${s.name}</span><span>฿${(lastDay[s.key]/1000).toFixed(1)}K</span></div>`).join('')}
+  `;
+  
+  // Table
+  const tbl = document.getElementById('tbl');
+  tbl.querySelector('thead').innerHTML = `<tr><th>Date</th>${DATA.STORES.map(s=>`<th>${s.name.split(' ')[0]}</th>`).join('')}<th>Total</th></tr>`;
+  const tbody = tbl.querySelector('tbody');
+  tbody.innerHTML = DATA.daily.slice(-14).reverse().map((d,i) => {
+    const dateObj = new Date(d.date);
+    return `<tr ${i===0?'class="newest"':''}>
+      <td>${dateObj.toLocaleDateString('th-TH', {month:'short', day:'numeric'})}</td>
+      ${DATA.STORES.map(s => `<td class="${d[s.key]===0?'zero':''}">${d[s.key]>0?(d[s.key]/1000).toFixed(1)+'K':'—'}</td>`).join('')}
+      <td class="tot">${(d.tot/1000).toFixed(1)}K</td>
+    </tr>`;
+  }).join('');
+  
+  // Insights
+  document.getElementById('insightContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12.5px">
+      <div style="padding:12px;background:rgba(95,178,138,.12);border-radius:8px;border-left:3px solid var(--good)">
+        <div style="color:var(--muted2);font-size:11px;font-weight:600;text-transform:uppercase">ยอดรวมทั้งงวด</div>
+        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${(totalRev/1e6).toFixed(2)}M</div>
+      </div>
+      <div style="padding:12px;background:rgba(224,139,61,.12);border-radius:8px;border-left:3px solid var(--warn)">
+        <div style="color:var(--muted2);font-size:11px;font-weight:600;text-transform:uppercase">ยอดเฉลี่ยต่อวัน</div>
+        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${(totalRev/DATA.daily.length/1000).toFixed(0)}K</div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('foot-tot').innerHTML = `ยอดรวม <b style="color:var(--gold-l);font-family:'Space Grotesk'">฿${(totalRev/1e6).toFixed(2)}M</b> · ${DATA.daily.length} วัน`;
+  
+  // Tab navigation
+  document.querySelectorAll('.stab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`[data-tabpanel="${tab}"]`).classList.add('active');
+    });
+  });
+}
 
-// ============================================
-// BUILD CHARTS
-// ============================================
 function buildCharts(DATA) {
-  // Monthly trend
-  const monthlyCtx = document.getElementById('monthly')?.getContext('2d');
-  if (monthlyCtx) {
-    const datasets = DATA.STORES.map(s => ({
-      label: s.name,
-      data: DATA.monthly[s.name],
-      borderColor: s.color,
-      backgroundColor: s.color + '22',
-      tension: 0.4,
-      fill: true,
-      borderWidth: 2.5
-    }));
-    
-    new Chart(monthlyCtx, {
+  const cfg = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {labels: {font: {family: "'Space Grotesk'"}, color: '#B79AA2', boxWidth: 12, padding: 12}},
+      filler: {propagate: true}
+    },
+    scales: {
+      x: {grid: {color: 'rgba(255,255,255,0.04)'}, ticks: {color: '#8A6F77', font: {size: 11}}},
+      y: {grid: {color: 'rgba(255,255,255,0.08)'}, ticks: {color: '#8A6F77', font: {family: "'Space Grotesk'"}}}
+    }
+  };
+  
+  // Monthly
+  const mCtx = document.getElementById('monthly')?.getContext('2d');
+  if (mCtx) {
+    new Chart(mCtx, {
       type: 'line',
-      data: { labels: DATA.months, datasets },
-      options: { ...chartDefaults, plugins: {...chartDefaults.plugins, filler: {propagate: true}} }
+      data: {
+        labels: DATA.months,
+        datasets: DATA.STORES.map(s => ({
+          label: s.name,
+          data: DATA.monthlyData[s.name],
+          borderColor: s.color,
+          backgroundColor: s.color + '22',
+          tension: 0.4,
+          fill: true,
+          borderWidth: 2.5
+        }))
+      },
+      options: cfg
     });
   }
   
-  // Share pie
-  const shareCtx = document.getElementById('share')?.getContext('2d');
-  if (shareCtx) {
-    const totals = {};
-    DATA.STORES.forEach(s => {
-      totals[s.name] = DATA.monthly[s.name].reduce((a,b) => a+b, 0);
-    });
-    
-    new Chart(shareCtx, {
+  // Share
+  const sCtx = document.getElementById('share')?.getContext('2d');
+  if (sCtx) {
+    new Chart(sCtx, {
       type: 'doughnut',
       data: {
         labels: DATA.STORES.map(s => s.name),
         datasets: [{
-          data: DATA.STORES.map(s => totals[s.name]),
+          data: DATA.STORES.map(s => DATA.monthlyData[s.name].reduce((a,b)=>a+b,0)),
           backgroundColor: DATA.STORES.map(s => s.color),
           borderColor: '#160C10',
           borderWidth: 2
         }]
       },
-      options: {...chartDefaults, plugins: {...chartDefaults.plugins, legend: {...chartDefaults.plugins.legend, position: 'bottom'}}}
+      options: {...cfg, plugins: {...cfg.plugins, legend: {...cfg.plugins.legend, position: 'bottom'}}}
     });
   }
   
-  // Daily trend
-  const dailyCtx = document.getElementById('daily')?.getContext('2d');
-  if (dailyCtx) {
-    new Chart(dailyCtx, {
+  // Daily
+  const dCtx = document.getElementById('daily')?.getContext('2d');
+  if (dCtx) {
+    new Chart(dCtx, {
       type: 'line',
       data: {
         labels: DATA.daily.slice(-30).map(d => new Date(d.date).toLocaleDateString('th-TH', {month:'short', day:'numeric'})),
@@ -170,510 +501,14 @@ function buildCharts(DATA) {
           borderWidth: 2.5
         }]
       },
-      options: chartDefaults
+      options: cfg
     });
   }
-  
-  // Group share
-  const groupCtx = document.getElementById('groupShare')?.getContext('2d');
-  if (groupCtx) {
-    const mallTot = DATA.STORES.filter(s => ['par','emp'].includes(s.key)).reduce((acc, s) => acc + DATA.monthly[s.name].reduce((a,b) => a+b, 0), 0);
-    const centralTot = DATA.STORES.filter(s => ['lad','cw','pin'].includes(s.key)).reduce((acc, s) => acc + DATA.monthly[s.name].reduce((a,b) => a+b, 0), 0);
-    
-    new Chart(groupCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['The Mall (Paragon + Emporium)', 'Central (Ladprao + CTW + Pinklao)'],
-        datasets: [{
-          data: [mallTot, centralTot],
-          backgroundColor: ['#E08B3D', '#5FB28A'],
-          borderColor: '#160C10',
-          borderWidth: 2
-        }]
-      },
-      options: {...chartDefaults, plugins: {...chartDefaults.plugins, legend: {...chartDefaults.plugins.legend, position: 'bottom'}}}
-    });
-  }
-}
-
-// ============================================
-// BUILD CONTENT
-// ============================================
-function buildContent(DATA) {
-  // Legend pills
-  document.getElementById('legend').innerHTML = DATA.STORES.map(s => 
-    `<button class="pill" style="--sw:${s.color}" data-store="${s.name}"><span class="sw" style="background:${s.color}"></span>${s.name}</button>`
-  ).join('');
-  
-  // Group stats
-  const mallTot = DATA.STORES.filter(s => ['par','emp'].includes(s.key)).reduce((acc, s) => acc + DATA.monthly[s.name].reduce((a,b) => a+b, 0), 0);
-  const centralTot = DATA.STORES.filter(s => ['lad','cw','pin'].includes(s.key)).reduce((acc, s) => acc + DATA.monthly[s.name].reduce((a,b) => a+b, 0), 0);
-  
-  document.getElementById('grpStats').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;margin-top:10px">
-      <div style="padding:10px;background:rgba(224,139,61,.12);border-radius:8px;border-left:3px solid #E08B3D">
-        <div style="color:#B79AA2;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">The Mall</div>
-        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${Math.round(mallTot).toLocaleString('en-US')}</div>
-      </div>
-      <div style="padding:10px;background:rgba(95,178,138,.12);border-radius:8px;border-left:3px solid #5FB28A">
-        <div style="color:#B79AA2;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Central</div>
-        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${Math.round(centralTot).toLocaleString('en-US')}</div>
-      </div>
-    </div>
-  `;
-  
-  // Top 3 ranking
-  const storeRanks = DATA.STORES.map(s => ({
-    name: s.name,
-    total: DATA.monthly[s.name].reduce((a,b) => a+b, 0),
-    color: s.color
-  })).sort((a,b) => b.total - a.total);
-  
-  document.getElementById('rankList').innerHTML = storeRanks.map((s, i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:28px;height:28px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:#160C10;font-size:13px">${i+1}</div>
-        <span style="font-size:13px">${s.name}</span>
-      </div>
-      <div style="font-family:'Space Grotesk';font-weight:600;color:#D8B34E">฿${Math.round(s.total).toLocaleString('en-US')}</div>
-    </div>
-  `).join('');
-  
-  // Latest (last day)
-  const lastDay = DATA.daily[DATA.daily.length - 1];
-  if (lastDay) {
-    const lastDate = new Date(lastDay.date);
-    document.getElementById('latest').innerHTML = `
-      <div class="lt">
-        <span class="tag">ยอดขายล่าสุด</span>
-        <span class="lbadge">${lastDate.toLocaleDateString('th-TH', {weekday:'short'})}</span>
-      </div>
-      <div class="ldate">${lastDate.toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'})}</div>
-      <div class="lbig"><span class="baht">฿</span>${Math.round(lastDay.tot).toLocaleString('en-US')}</div>
-      ${DATA.STORES.map(s => `
-        <div class="lrow">
-          <span>${s.name}</span>
-          <span>฿${Math.round(lastDay[s.key]).toLocaleString('en-US')}</span>
-        </div>
-      `).join('')}
-    `;
-  }
-  
-  // Recent 14 days table
-  const recent14 = DATA.daily.slice(-14).reverse();
-  const thead = `<thead><tr><th>Date</th>${DATA.STORES.map(s => `<th>${s.name.split(' ')[0]}</th>`).join('')}<th>Total</th></tr></thead>`;
-  const tbody = `<tbody>${recent14.map((d, idx) => `
-    <tr ${idx === 0 ? 'class="newest"' : ''}>
-      <td>${new Date(d.date).toLocaleDateString('th-TH', {month:'short', day:'numeric'})}</td>
-      ${DATA.STORES.map(s => `<td class="${d[s.key] === 0 ? 'zero' : ''}">${d[s.key] > 0 ? (d[s.key]/1000).toFixed(1) + 'K' : '—'}</td>`).join('')}
-      <td class="tot">${(d.tot/1000).toFixed(1)}K</td>
-    </tr>
-  `).join('')}</tbody>`;
-  
-  document.getElementById('tbl').innerHTML = thead + tbody;
-  
-  // Daily sublabel
-  document.getElementById('dailysub').innerHTML = `${DATA.daily.slice(-30).length} วันล่าสุด · มิ.ย. – ก.ค. 2026`;
-  
-  // Signal & Risk
-  const lastThreeDays = DATA.daily.slice(-3);
-  const avgLastThree = lastThreeDays.reduce((a, d) => a + d.tot, 0) / 3;
-  const prevWeekAvg = DATA.daily.slice(-10, -3).reduce((a, d) => a + d.tot, 0) / 7;
-  
-  if (avgLastThree > prevWeekAvg * 1.1) {
-    document.getElementById('sig-lead').textContent = '📈 ยอดขายเพิ่มขึ้น';
-    document.getElementById('sig-desc').textContent = `ยอดเฉลี่ย 3 วันล่าสุดเพิ่มขึ้น ${((avgLastThree/prevWeekAvg - 1) * 100).toFixed(1)}% เทียบสัปดาห์ก่อน`;
-  } else {
-    document.getElementById('sig-lead').textContent = '📊 ยอดขายปกติ';
-    document.getElementById('sig-desc').textContent = `ยอดเฉลี่ยในช่วง 3 วันล่าสุดอยู่ที่ ฿${Math.round(avgLastThree).toLocaleString('en-US')}/วัน`;
-  }
-  
-  // Risk: ถ้าวันสุดท้ายต่ำ
-  if (lastDay.tot < prevWeekAvg * 0.7) {
-    document.getElementById('risk-lead').textContent = '⚠️ ยอดต่ำกว่าค่าเฉลี่ย';
-    document.getElementById('risk-desc').innerHTML = `<b>วันที่ ${lastDate.toLocaleDateString('th-TH', {month:'short', day:'numeric'})}</b> ยอดต่ำกว่าค่าเฉลี่ยสัปดาห์ก่อน ${((1 - lastDay.tot/prevWeekAvg) * 100).toFixed(0)}%`;
-  } else {
-    document.getElementById('risk-lead').textContent = '✅ สถานการณ์ปกติ';
-    document.getElementById('risk-desc').textContent = `ไม่มี risk สำคัญ · โปรดติดตามต่อไป`;
-  }
-  
-  // Placeholder for other tabs (seller, avgbill, target, insights)
-  document.getElementById('sellerContent').innerHTML = '<p style="color:#8A6F77">Seller performance data coming soon</p>';
-  document.getElementById('billsContent').innerHTML = '<p style="color:#8A6F77">Average per bill data coming soon</p>';
-  document.getElementById('targetContent').innerHTML = '<p style="color:#8A6F77">Target achievement data coming soon</p>';
-  document.getElementById('insights').innerHTML = '<p style="color:#8A6F77">Insights coming soon</p>';
-}
-
-// ============================================
-// INITIALIZE
-// ============================================
-async function initDashboard() {
-  const DATA = await fetchAndParseData();
-  if (!DATA) return;
-  
-  document.getElementById('updated').innerHTML = `อัปเดตล่าสุด <b style="color:var(--blush)">${DATA.timestamp}</b>`;
-  
-  const totalRev = DATA.daily.reduce((a, d) => a + d.tot, 0);
-  
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi hero">
-      <div class="klabel">ยอดรวม · ทั้งงวด</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(totalRev).toLocaleString('en-US')}</div>
-      <div class="ksub">${DATA.daily.length} วันทำการ · 5 สาขา</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">เฉลี่ยต่อวัน</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(totalRev / DATA.daily.length).toLocaleString('en-US')}</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Max Day</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(Math.max(...DATA.daily.map(d => d.tot))).toLocaleString('en-US')}</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Min Day</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(Math.min(...DATA.daily.filter(d => d.tot > 0).map(d => d.tot))).toLocaleString('en-US')}</div>
-    </div>
-  `;
-  
-  document.querySelectorAll('.stab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelector(`[data-tabpanel="${tabName}"]`).classList.add('active');
-      sessionStorage.setItem('activeTab', tabName);
-    });
-  });
-  
-  const savedTab = sessionStorage.getItem('activeTab');
-  if (savedTab) {
-    document.querySelector(`[data-tab="${savedTab}"]`)?.click();
-  }
-  
-  document.getElementById('foot-tot').innerHTML = `ยอดรวมทั้งงวด <b style="color:var(--gold-l);font-family:'Space Grotesk'">฿${Math.round(totalRev).toLocaleString('en-US')}</b> · 5 สาขา · ${DATA.daily.length} วันทำการ`;
-  
-  buildCharts(DATA);
-  buildContent(DATA);
-  
-  console.log('✅ Dashboard ready!');
-}
-
-initDashboard();
-</script>
-
-<style> :root{ --bg:#160C10; --bg2:#1E1015; --surf:#241319; --surf2:#2C1820; --line:#3A2129; --line2:#4A2A34; --burg:#761D35; --burg-d:#5C1628; --burg-l:#9B3A52; --gold:#B8922E; --gold-l:#D8B34E; --gold-g:#E4C76A; --ivory:#FAF4F0; --blush:#F0DFE3; --muted:#B79AA2; --muted2:#8A6F77; --good:#5FB28A; --warn:#E08B3D; --bad:#D96A78; --r:16px; } *{box-sizing:border-box;margin:0;padding:0} html{-webkit-text-size-adjust:100%} body{ font-family:'Inter Tight',system-ui,sans-serif; background: radial-gradient(1200px 600px at 12% -8%, rgba(118,29,53,.32), transparent 60%), radial-gradient(1000px 700px at 105% 0%, rgba(184,146,46,.10), transparent 55%), var(--bg); color:var(--ivory); padding:clamp(14px,2.4vw,30px); min-height:100vh; line-height:1.45; } .num{font-family:'Space Grotesk',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em} .wrap{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:190px 1fr;gap:22px;align-items:start} .wrap>header,.wrap>.brief,.wrap>.kpis,.wrap>footer{grid-column:1/-1} header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap; padding-bottom:18px;border-bottom:1px solid var(--line)} .brand{display:flex;flex-direction:column;gap:4px} .eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold);font-weight:600} .title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(28px,4.4vw,46px);line-height:1; color:var(--ivory)} .title b{color:var(--gold-g);font-weight:600;font-style:italic} .subtitle{font-size:13px;color:var(--muted);margin-top:6px} .meta{text-align:right;font-size:12px;color:var(--muted)} .meta .live{display:inline-flex;align-items:center;gap:7px;color:var(--gold-l);font-weight:600; font-size:12px;letter-spacing:.04em} .dot{width:8px;height:8px;border-radius:50%;background:var(--gold-g);box-shadow:0 0 0 0 rgba(228,199,106,.6); animation:pulse 2s infinite} @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(228,199,106,.55)}70%{box-shadow:0 0 0 9px rgba(228,199,106,0)}100%{box-shadow:0 0 0 0 rgba(228,199,106,0)}} .meta .src{margin-top:5px;color:var(--muted2);font-size:11px} .brief{margin-top:18px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:stretch} .brief-card{background:linear-gradient(160deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px} .brief-tag{font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600} .brief-signal{border-left:3px solid var(--gold)} .brief-signal .brief-tag{color:var(--gold-l)} .brief-risk{border-left:3px solid var(--bad)} .brief-risk .brief-tag{color:var(--bad)} .brief-card .lead{font-family:'Fraunces',serif;font-size:16px;font-weight:500;color:var(--ivory)} .brief-card .desc{font-size:12.5px;color:var(--muted);line-height:1.5} .brief-card .desc b{color:var(--blush);font-weight:600} .kpis{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:14px;margin-top:14px} .kpi{background:linear-gradient(165deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden} .kpi.hero{background:linear-gradient(150deg,var(--burg-d),#2A0F1A 70%);border:1px solid var(--burg-l)} .kpi.hero::after{content:"";position:absolute;inset:0;background: radial-gradient(420px 180px at 110% -30%,rgba(228,199,106,.25),transparent 60%);pointer-events:none} .kpi .klabel{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600} .kpi.hero .klabel{color:var(--gold-g)} .kpi .kval{font-family:'Space Grotesk',monospace;font-weight:600;font-size:clamp(22px,2.7vw,30px); margin-top:9px;color:var(--ivory);letter-spacing:-.02em} .kpi.hero .kval{color:#fff;font-size:clamp(26px,3.4vw,38px)} .kpi .ksub{font-size:11.5px;color:var(--muted);margin-top:7px;display:flex;align-items:center;gap:7px;flex-wrap:wrap} .kpi.hero .ksub{color:var(--blush)} .chip{font-family:'Space Grotesk',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px; display:inline-flex;align-items:center;gap:3px} .chip.up{background:rgba(95,178,138,.16);color:var(--good)} .chip.down{background:rgba(217,106,120,.16);color:var(--bad)} .kpi .baht{font-size:.62em;color:var(--gold-l);font-family:'Inter Tight';font-weight:600;margin-right:3px; vertical-align:.06em} .kpi.hero .baht{color:var(--gold-g)} .grid{display:grid;gap:14px;margin-top:14px} .g2{grid-template-columns:1.7fr 1fr} .g2b{grid-template-columns:1fr 1fr} .card{background:linear-gradient(168deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:18px} .card h3{font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--ivory); display:flex;align-items:center;gap:9px} .card h3 .ix{font-family:'Space Grotesk';font-size:11px;color:var(--gold);font-weight:600; border:1px solid var(--line2);border-radius:6px;padding:2px 6px;letter-spacing:.05em} .card .csub{font-size:11.5px;color:var(--muted2);margin-top:3px;margin-bottom:12px} .chead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap} .pills{display:flex;gap:6px;flex-wrap:wrap} .pill{font-size:11px;font-weight:600;font-family:'Inter Tight';padding:5px 11px;border-radius:20px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer; display:inline-flex;align-items:center;gap:6px;transition:.18s;user-select:none} .pill:hover{border-color:var(--gold);color:var(--blush)} .pill .sw{width:9px;height:9px;border-radius:50%} .pill.off{opacity:.4} .chartbox{position:relative;height:300px;margin-top:6px} .chartbox.sm{height:240px} canvas{max-width:100%} .latest{background: linear-gradient(150deg,rgba(184,146,46,.14),transparent 55%), linear-gradient(168deg,var(--surf2),var(--bg2)); border:1px solid var(--gold);border-radius:var(--r);padding:18px;position:relative;overflow:hidden} .latest::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px; background:radial-gradient(circle,rgba(228,199,106,.18),transparent 70%)} .latest .lt{display:flex;justify-content:space-between;align-items:center;gap:10px} .latest .tag{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-g);font-weight:700} .latest .lbadge{font-size:10.5px;color:var(--bg);background:var(--gold-g);font-weight:700; padding:3px 9px;border-radius:20px;letter-spacing:.03em} .latest .ldate{font-family:'Fraunces',serif;font-size:15px;color:var(--blush);margin-top:10px;font-weight:500} .latest .lbig{font-family:'Space Grotesk',monospace;font-weight:600;font-size:clamp(30px,5vw,44px); color:#fff;margin-top:2px;letter-spacing:-.02em} .latest .lbig .baht{font-size:.5em;color:var(--gold-g);font-family:'Inter Tight';font-weight:700;vertical-align:.12em;margin-right:4px} .latest .lrow{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0; border-top:1px solid rgba(255,255,255,.06)} .latest .lrow:first-of-type{margin-top:12px} .latest .lrow span:first-child{color:var(--muted)} .latest .lrow span:last-child{font-family:'Space Grotesk';font-weight:600;color:var(--ivory)} .latest .lnote{font-size:11px;color:var(--muted2);margin-top:12px;line-height:1.5} .tablewrap{overflow-x:auto;margin-top:4px;border-radius:10px} table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px} th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted2);font-weight:600; text-align:right;padding:9px 10px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--surf)} th:first-child{text-align:left} td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.045);text-align:right; font-family:'Space Grotesk';font-weight:500;color:var(--blush)} td:first-child{text-align:left;font-family:'Inter Tight';color:var(--muted);font-weight:500} tr:hover td{background:rgba(184,146,46,.05)} td.tot{color:var(--gold-l);font-weight:600} td.zero{color:var(--muted2);opacity:.5} tr.newest td{background:rgba(184,146,46,.10)} tr.newest td:first-child{color:var(--gold-g);font-weight:600} .tbadge{font-size:9px;background:var(--gold-g);color:var(--bg);font-weight:700;padding:1px 6px;border-radius:10px;margin-left:7px;letter-spacing:.04em} .side-tabs{grid-column:1/2;position:sticky;top:16px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(168deg,var(--surf),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:10px;align-self:start} .stab{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:var(--muted);cursor:pointer;text-align:left;font-family:'Inter Tight';font-size:12.5px;font-weight:600;transition:.16s;width:100%} .stab:hover{background:rgba(184,146,46,.10);color:var(--blush)} .stab.active{background:linear-gradient(135deg,var(--burg),var(--burg-d));color:var(--ivory);box-shadow:0 0 0 1px rgba(184,146,46,.35) inset} .stab-ic{font-family:'Space Grotesk';font-size:10px;font-weight:700;color:var(--gold-l);border:1px solid var(--line2);border-radius:6px;padding:2px 6px;flex-shrink:0;min-width:24px;text-align:center} .stab.active .stab-ic{color:var(--gold-g);border-color:rgba(255,255,255,.25)} .stab-tx{white-space:nowrap} .tab-content{grid-column:2/3;min-width:0} .tab-panel{display:none} .tab-panel.active{display:block;animation:tabIn .22s ease} @keyframes tabIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}} @media(max-width:920px){ .kpis{grid-template-columns:1fr 1fr} .g2,.g2b{grid-template-columns:1fr} .ins{grid-template-columns:1fr} .brief{grid-template-columns:1fr} } @media(max-width:860px){ .wrap{grid-template-columns:1fr} .side-tabs{position:sticky;top:0;z-index:20;flex-direction:row;overflow-x:auto;gap:6px;padding:8px;margin-bottom:2px;box-shadow:0 6px 14px rgba(0,0,0,.25)} .stab{flex-direction:column;gap:4px;padding:8px 10px;min-width:74px;text-align:center} .stab-tx{font-size:10.5px;white-space:normal;line-height:1.15} .tab-content{grid-column:1/2} } @media(max-width:560px){.kpis{grid-template-columns:1fr}} </style>
-
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <span class="eyebrow">Offline Retail</span>
-      <h1 class="title">THE <b>FINERY</b></h1>
-      <div class="subtitle">Daily Sales Update — รายงานยอดขายหน้าร้าน 5 สาขา</div>
-    </div>
-    <div class="meta">
-      <div class="live"><span class="dot"></span>LIVE · เชื่อมต่อ data.json</div>
-      <div id="updated"></div>
-      <div class="src">ที่มา: Google Sheet → GitHub → Dashboard</div>
-    </div>
-  </header>
-
-  <div class="brief">
-    <div class="brief-card brief-signal" style="min-width:260px">
-      <span class="brief-tag">Signal · โฟกัสวันนี้</span>
-      <span class="lead" id="sig-lead"></span>
-      <span class="desc" id="sig-desc"></span>
-    </div>
-    <div class="brief-card brief-risk">
-      <span class="brief-tag">⚠ Exception · ต้องจับตา</span>
-      <span class="lead" id="risk-lead"></span>
-      <span class="desc" id="risk-desc"></span>
-    </div>
-  </div>
-
-  <div class="kpis" id="kpis"></div>
-
-  <nav class="side-tabs" id="sideTabs">
-    <button class="stab active" data-tab="overview"><span class="stab-ic">01</span><span class="stab-tx">ภาพรวม</span></button>
-    <button class="stab" data-tab="bestseller"><span class="stab-ic">★</span><span class="stab-tx">สินค้าขายดี</span></button>
-    <button class="stab" data-tab="daily"><span class="stab-ic">03</span><span class="stab-tx">รายวัน/รายเดือน</span></button>
-    <button class="stab" data-tab="seller"><span class="stab-ic">SP</span><span class="stab-tx">พนักงานขาย</span></button>
-    <button class="stab" data-tab="avgbill"><span class="stab-ic">AVG</span><span class="stab-tx">Avg / Bill</span></button>
-    <button class="stab" data-tab="target"><span class="stab-ic">ACH</span><span class="stab-tx">เป้าหมาย</span></button>
-    <button class="stab" data-tab="insights"><span class="stab-ic">IN</span><span class="stab-tx">Insights</span></button>
-  </nav>
-
-  <div class="tab-content" id="tabContent">
-    <div class="tab-panel active" data-tabpanel="overview">
-      <div class="grid g2">
-        <div class="card">
-          <div class="chead">
-            <div>
-              <h3><span class="ix">01</span> แนวโน้มรายเดือน · แยกตามสาขา</h3>
-              <div class="csub">ธ.ค. 2025 – ม.ค. 2026 · กดที่ชื่อสาขาเพื่อซ่อน/แสดง</div>
-            </div>
-          </div>
-          <div class="pills" id="legend"></div>
-          <div class="chartbox"><canvas id="monthly"></canvas></div>
-        </div>
-        <div class="card">
-          <h3><span class="ix">02</span> สัดส่วนยอดขาย</h3>
-          <div class="csub">รวมทั้งงวด · แยกตามสาขา</div>
-          <div class="chartbox sm"><canvas id="share"></canvas></div>
-        </div>
-      </div>
-      <div class="grid g2">
-        <div class="card">
-          <h3><span class="ix">G</span> สัดส่วนยอดขาย · แยกตามกลุ่มสาขา</h3>
-          <div class="csub">The Mall (Paragon + Emporium) vs Central (Ladprao + Central World + Pinklao)</div>
-          <div class="chartbox sm"><canvas id="groupShare"></canvas></div>
-        </div>
-        <div class="card">
-          <h3><span class="ix">G</span> ยอดรวมตามกลุ่ม</h3>
-          <div class="csub">รวมทั้งงวด · 7 เดือน</div>
-          <div class="grp-stats" id="grpStats"></div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3><span class="ix">★</span> Top 3 สาขายอดขายสูงสุด</h3>
-          <div class="csub">จัดอันดับจากยอดรวมทั้งงวด</div>
-          <div class="rank-list" id="rankList"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="bestseller">
-      <div class="grid">
-        <div class="card">
-          <div class="chead">
-            <div>
-              <h3><span class="ix">★★</span> สินค้าขายดี (Best Seller)</h3>
-              <div class="csub" id="bsSub">จัดอันดับจากจำนวนชิ้นที่ขายได้</div>
-            </div>
-          </div>
-          <div class="bs-list" id="bsList"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="daily">
-      <div class="grid">
-        <div class="card">
-          <h3><span class="ix">M</span> ดูยอดแบบเต็มเดือน</h3>
-          <div class="csub">เลือกเดือนที่ต้องการดู</div>
-          <div class="monthpicker" id="monthPicker"></div>
-          <div class="fm-grid" id="fmStats"></div>
-          <div class="fm-stores" id="fmStores"></div>
-        </div>
-      </div>
-      <div class="grid g2">
-        <div class="card">
-          <div class="chead">
-            <div>
-              <h3><span class="ix">03</span> ยอดขายรายวัน · ภาพรวม</h3>
-              <div class="csub" id="dailysub"></div>
-            </div>
-            <div class="pills" id="rangePills"></div>
-          </div>
-          <div class="chartbox"><canvas id="daily"></canvas></div>
-        </div>
-        <div class="latest" id="latest"></div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3><span class="ix">04</span> รายวันล่าสุด · แยกตามสาขา</h3>
-          <div class="csub">14 วันทำการล่าสุด (บาท)</div>
-          <div class="tablewrap"><table id="tbl"></table></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="seller">
-      <div class="card" style="margin-top:14px;padding:18px">
-        <div class="chead">
-          <div>
-            <h3><span class="ix">SP</span> Performance พนักงานขาย</h3>
-            <div class="csub">จัดอันดับตามยอดขาย</div>
-          </div>
-        </div>
-        <div id="sellerContent">Loading...</div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="avgbill">
-      <div class="card" style="margin-top:14px;padding:18px">
-        <div class="chead">
-          <div>
-            <h3><span class="ix">AVG</span> Average per Bill · ยอดเฉลี่ยต่อบิล</h3>
-            <div class="csub">คำนวณจากจำนวน bills ที่เบิก</div>
-          </div>
-        </div>
-        <div id="billsContent">Loading...</div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="target">
-      <div class="card" style="margin-top:14px;padding:18px">
-        <h3><span class="ix">ACH</span> Achievement vs Target</h3>
-        <div class="csub">ยอดขาย MTD vs เป้าหมายเดือน ก.ค. 2026</div>
-        <div id="targetContent">Loading...</div>
-      </div>
-    </div>
-
-    <div class="tab-panel" data-tabpanel="insights">
-      <div class="ins" id="insights"></div>
-    </div>
-  </div>
-
-  <footer>
-    <span>The Finery · CDG Retail Analytics</span>
-    <span id="foot-tot"></span>
-  </footer>
-</div>
-
-<script>
-// ============================================
-// FETCH & PARSE data.json
-// ============================================
-async function fetchAndParseData() {
-  try {
-    const response = await fetch('./data.json');
-    if (!response.ok) throw new Error('Failed to fetch data.json');
-    const jsonData = await response.json();
-    
-    console.log('✅ data.json loaded successfully');
-    console.log('Data rows:', jsonData.data.length);
-    
-    return parseDataToDATA(jsonData.data);
-  } catch (error) {
-    console.error('❌ Error loading data:', error);
-    document.body.innerHTML = '<h1>Error loading dashboard data</h1><p>Could not fetch data.json. Please check the file exists.</p>';
-    return null;
-  }
-}
-
-function parseDataToDATA(rawData) {
-  // Parse raw array data from Google Sheet format into DATA object
-  // This will transform the array structure into the dashboard-ready format
-  
-  const STORES = [
-    {key:'lad', name:'Central Ladprao', index:2},
-    {key:'pin', name:'Central Pinklao', index:3},
-    {key:'par', name:'Siam Paragon', index:4},
-    {key:'cw',  name:'Central World', index:5},
-    {key:'emp', name:'Emporium', index:6},
-  ];
-  
-  const daily = [];
-  const monthlyData = {};
-  
-  // Initialize monthly data structure
-  STORES.forEach(s => {
-    monthlyData[s.name] = [];
-  });
-  
-  // Parse raw data (skip header rows 0-1)
-  rawData.slice(2).forEach(row => {
-    if (!row[0] || row[0].includes('Data will')) return;
-    
-    const date = row[0];
-    const obj = { date, tot: 0 };
-    
-    STORES.forEach(s => {
-      const val = parseFloat(row[s.index]) || 0;
-      obj[s.key] = val;
-      obj.tot += val;
-    });
-    
-    if (obj.tot > 0) daily.push(obj);
-  });
-  
-  // Build monthly aggregates
-  const months = ['December 2025', 'January 2026', 'February 2026', 'March 2026', 'April 2026', 'May 2026', 'June 2026', 'July 2026'];
-  
-  daily.forEach(d => {
-    const dateObj = new Date(d.date);
-    const month = dateObj.getMonth();
-    const year = dateObj.getFullYear();
-    
-    let monthIdx = -1;
-    if (year === 2025 && month === 11) monthIdx = 0; // Dec
-    else if (year === 2026) monthIdx = month + 1; // Jan onwards
-    
-    if (monthIdx >= 0 && monthIdx < months.length) {
-      STORES.forEach(s => {
-        if (!monthlyData[s.name][monthIdx]) monthlyData[s.name][monthIdx] = 0;
-        monthlyData[s.name][monthIdx] += d[s.key];
-      });
-    }
-  });
-  
-  // Pad monthly data with zeros
-  months.forEach((m, idx) => {
-    STORES.forEach(s => {
-      if (!monthlyData[s.name][idx]) monthlyData[s.name][idx] = 0;
-    });
-  });
-  
-  return {
-    months,
-    monthly: monthlyData,
-    daily,
-    timestamp: new Date().toLocaleString(),
-    STORES
-  };
-}
-
-// ============================================
-// INITIALIZE DASHBOARD
-// ============================================
-async function initDashboard() {
-  const DATA = await fetchAndParseData();
-  if (!DATA) return;
-  
-  // Update timestamp
-  document.getElementById('updated').innerHTML = `อัปเดตล่าสุด <b style="color:var(--blush)">${DATA.timestamp}</b>`;
-  
-  // Build KPIs
-  const totalRev = DATA.daily.reduce((a, d) => a + d.tot, 0);
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi hero">
-      <div class="klabel">ยอดรวม · ทั้งงวด</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(totalRev).toLocaleString('en-US')}</div>
-      <div class="ksub">${DATA.daily.length} วันทำการ · 5 สาขา</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">เฉลี่ยต่อวัน</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(totalRev / DATA.daily.length).toLocaleString('en-US')}</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Max Day</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(Math.max(...DATA.daily.map(d => d.tot))).toLocaleString('en-US')}</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Min Day</div>
-      <div class="kval"><span class="baht">฿</span>${Math.round(Math.min(...DATA.daily.filter(d => d.tot > 0).map(d => d.tot))).toLocaleString('en-US')}</div>
-    </div>
-  `;
-  
-  // Tab navigation
-  document.querySelectorAll('.stab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelector(`[data-tabpanel="${tabName}"]`).classList.add('active');
-    });
-  });
-  
-  // Footer
-  document.getElementById('foot-tot').innerHTML = `ยอดรวมทั้งงวด <b style="color:var(--gold-l);font-family:'Space Grotesk'">฿${Math.round(totalRev).toLocaleString('en-US')}</b> · 5 สาขา · ${DATA.daily.length} วันทำการ`;
-  
-  console.log('✅ Dashboard initialized');
 }
 
 // Start
-initDashboard();
+loadDashboard();
 </script>
+
+</body>
+</html>
