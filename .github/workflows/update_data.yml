@@ -1,0 +1,36 @@
+name: Update Dashboard Data
+
+on:
+  schedule:
+    # ทำงานทุกชั่วโมง เวลา 08:00 (Thailand time = UTC+7)
+    - cron: '0 1 * * *'  # 1:00 UTC = 8:00 AM Thailand
+  workflow_dispatch:  # กด run ได้ด้วยตัวเองถ้าต้องการ
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gspread google-auth-oauthlib google-auth-httplib2
+      
+      - name: Run update script
+        run: python update_data.py
+      
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "⬆️ Update data $(date)" || echo "No changes"
+          git push
