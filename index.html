@@ -1,521 +1,1198 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Finery Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  
-  <style>
-    :root {
-      --bg: #160C10;
-      --bg2: #1E1015;
-      --surf: #241319;
-      --surf2: #2C1820;
-      --line: #3A2129;
-      --line2: #4A2A34;
-      --burg: #761D35;
-      --burg-d: #5C1628;
-      --burg-l: #9B3A52;
-      --gold: #B8922E;
-      --gold-l: #D8B34E;
-      --gold-g: #E4C76A;
-      --ivory: #FAF4F0;
-      --blush: #F0DFE3;
-      --muted: #B79AA2;
-      --muted2: #8A6F77;
-      --good: #5FB28A;
-      --warn: #E08B3D;
-      --bad: #D96A78;
-      --r: 16px;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      font-family: 'Inter Tight', system-ui, sans-serif;
-      background: radial-gradient(1200px 600px at 12% -8%, rgba(118,29,53,.32), transparent 60%), radial-gradient(1000px 700px at 105% 0%, rgba(184,146,46,.10), transparent 55%), var(--bg);
-      color: var(--ivory);
-      padding: clamp(14px, 2.4vw, 30px);
-      min-height: 100vh;
-      line-height: 1.45;
-    }
-    
-    .num { font-family: 'Space Grotesk', monospace; font-variant-numeric: tabular-nums; }
-    .wrap { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 190px 1fr; gap: 22px; }
-    .wrap > header, .wrap > .brief, .wrap > .kpis, .wrap > footer { grid-column: 1 / -1; }
-    
-    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
-    .brand { display: flex; flex-direction: column; gap: 4px; }
-    .eyebrow { font-size: 11px; letter-spacing: .42em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
-    .title { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(28px, 4.4vw, 46px); line-height: 1; color: var(--ivory); }
-    .title b { color: var(--gold-g); font-style: italic; }
-    .subtitle { font-size: 13px; color: var(--muted); margin-top: 6px; }
-    .meta { text-align: right; font-size: 12px; color: var(--muted); }
-    .meta .live { display: inline-flex; align-items: center; gap: 7px; color: var(--gold-l); font-weight: 600; letter-spacing: .04em; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-g); animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(228,199,106,.55); } 70% { box-shadow: 0 0 0 9px rgba(228,199,106,0); } }
-    .meta .src { margin-top: 5px; color: var(--muted2); font-size: 11px; }
-    
-    .brief { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 16px; }
-    .brief-card { background: linear-gradient(160deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
-    .brief-tag { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; font-weight: 600; }
-    .brief-signal { border-left: 3px solid var(--gold); }
-    .brief-signal .brief-tag { color: var(--gold-l); }
-    .brief-risk { border-left: 3px solid var(--bad); }
-    .brief-risk .brief-tag { color: var(--bad); }
-    .brief-card .lead { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--ivory); }
-    .brief-card .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
-    .brief-card .desc b { color: var(--blush); font-weight: 600; }
-    
-    .kpis { display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
-    .kpi { background: linear-gradient(165deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; position: relative; overflow: hidden; }
-    .kpi.hero { background: linear-gradient(150deg, var(--burg-d), #2A0F1A 70%); border: 1px solid var(--burg-l); }
-    .kpi.hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(420px 180px at 110% -30%, rgba(228,199,106,.25), transparent 60%); pointer-events: none; }
-    .kpi .klabel { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-    .kpi.hero .klabel { color: var(--gold-g); }
-    .kpi .kval { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: clamp(22px, 2.7vw, 30px); margin-top: 9px; color: var(--ivory); letter-spacing: -.02em; }
-    .kpi.hero .kval { color: #fff; font-size: clamp(26px, 3.4vw, 38px); }
-    .kpi .ksub { font-size: 11.5px; color: var(--muted); margin-top: 7px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-    .kpi.hero .ksub { color: var(--blush); }
-    .baht { font-size: .62em; color: var(--gold-l); font-family: 'Inter Tight'; font-weight: 600; margin-right: 3px; vertical-align: .06em; }
-    .kpi.hero .baht { color: var(--gold-g); }
-    
-    .grid { display: grid; gap: 14px; margin-top: 14px; }
-    .g2 { grid-template-columns: 1.7fr 1fr; }
-    .card { background: linear-gradient(168deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
-    .card h3 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; color: var(--ivory); display: flex; align-items: center; gap: 9px; }
-    .card h3 .ix { font-family: 'Space Grotesk'; font-size: 11px; color: var(--gold); font-weight: 600; border: 1px solid var(--line2); border-radius: 6px; padding: 2px 6px; letter-spacing: .05em; }
-    .card .csub { font-size: 11.5px; color: var(--muted2); margin-top: 3px; margin-bottom: 12px; }
-    
-    .chartbox { position: relative; height: 300px; margin-top: 6px; }
-    .chartbox.sm { height: 240px; }
-    
-    .latest { background: linear-gradient(150deg, rgba(184,146,46,.14), transparent 55%), linear-gradient(168deg, var(--surf2), var(--bg2)); border: 1px solid var(--gold); border-radius: var(--r); padding: 18px; position: relative; overflow: hidden; }
-    .latest::before { content: ""; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(228,199,106,.18), transparent 70%); }
-    .latest .lt { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .latest .tag { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-g); font-weight: 700; }
-    .latest .lbadge { font-size: 10.5px; color: var(--bg); background: var(--gold-g); font-weight: 700; padding: 3px 9px; border-radius: 20px; letter-spacing: .03em; }
-    .latest .ldate { font-family: 'Fraunces', serif; font-size: 15px; color: var(--blush); margin-top: 10px; font-weight: 500; }
-    .latest .lbig { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: clamp(30px, 5vw, 44px); color: #fff; margin-top: 2px; letter-spacing: -.02em; }
-    .latest .lbig .baht { font-size: .5em; color: var(--gold-g); font-family: 'Inter Tight'; font-weight: 700; vertical-align: .12em; margin-right: 4px; }
-    .latest .lrow { display: flex; justify-content: space-between; font-size: 12.5px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); }
-    .latest .lrow:first-of-type { margin-top: 12px; }
-    .latest .lrow span:first-child { color: var(--muted); }
-    .latest .lrow span:last-child { font-family: 'Space Grotesk'; font-weight: 600; color: var(--ivory); }
-    
-    .tablewrap { overflow-x: auto; margin-top: 4px; border-radius: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
-    th { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted2); font-weight: 600; text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line2); position: sticky; top: 0; background: var(--surf); }
-    th:first-child { text-align: left; }
-    td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.045); text-align: right; font-family: 'Space Grotesk'; font-weight: 500; color: var(--blush); }
-    td:first-child { text-align: left; font-family: 'Inter Tight'; color: var(--muted); font-weight: 500; }
-    tr:hover td { background: rgba(184,146,46,.05); }
-    td.tot { color: var(--gold-l); font-weight: 600; }
-    td.zero { color: var(--muted2); opacity: .5; }
-    tr.newest td { background: rgba(184,146,46,.10); }
-    tr.newest td:first-child { color: var(--gold-g); font-weight: 600; }
-    
-    .side-tabs { grid-column: 1/2; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(168deg, var(--surf), var(--bg2)); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; align-self: start; }
-    .stab { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: none; background: transparent; color: var(--muted); cursor: pointer; text-align: left; font-family: 'Inter Tight'; font-size: 12.5px; font-weight: 600; transition: .16s; width: 100%; }
-    .stab:hover { background: rgba(184,146,46,.10); color: var(--blush); }
-    .stab.active { background: linear-gradient(135deg, var(--burg), var(--burg-d)); color: var(--ivory); box-shadow: 0 0 0 1px rgba(184,146,46,.35) inset; }
-    .stab-ic { font-family: 'Space Grotesk'; font-size: 10px; font-weight: 700; color: var(--gold-l); border: 1px solid var(--line2); border-radius: 6px; padding: 2px 6px; flex-shrink: 0; min-width: 24px; text-align: center; }
-    .stab.active .stab-ic { color: var(--gold-g); border-color: rgba(255,255,255,.25); }
-    .stab-tx { white-space: nowrap; }
-    
-    .tab-content { grid-column: 2/3; min-width: 0; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; animation: tabIn .22s ease; }
-    @keyframes tabIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    
-    footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted2); }
-    
-    @media (max-width: 920px) {
-      .kpis { grid-template-columns: 1fr 1fr; }
-      .g2 { grid-template-columns: 1fr; }
-      .brief { grid-template-columns: 1fr; }
-    }
-    
-    @media (max-width: 860px) {
-      .wrap { grid-template-columns: 1fr; }
-      .side-tabs { position: sticky; top: 0; z-index: 20; flex-direction: row; overflow-x: auto; gap: 6px; padding: 8px; margin-bottom: 2px; }
-      .stab { flex-direction: column; gap: 4px; padding: 8px 10px; min-width: 74px; text-align: center; }
-      .stab-tx { font-size: 10.5px; white-space: normal; line-height: 1.15; }
-      .tab-content { grid-column: 1 / -1; }
-    }
-    
-    @media (max-width: 560px) {
-      .kpis { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style> :root{ --bg:#160C10; --bg2:#1E1015; --surf:#241319; --surf2:#2C1820; --line:#3A2129; --line2:#4A2A34; --burg:#761D35; --burg-d:#5C1628; --burg-l:#9B3A52; --gold:#B8922E; --gold-l:#D8B34E; --gold-g:#E4C76A; --ivory:#FAF4F0; --blush:#F0DFE3; --muted:#B79AA2; --muted2:#8A6F77; --good:#5FB28A; --warn:#D8B34E; --bad:#D96A78; --r:16px; } *{box-sizing:border-box;margin:0;padding:0} html{-webkit-text-size-adjust:100%} body{ font-family:'Inter Tight',system-ui,sans-serif; background: radial-gradient(1200px 600px at 12% -8%, rgba(118,29,53,.32), transparent 60%), radial-gradient(1000px 700px at 105% 0%, rgba(184,146,46,.10), transparent 55%), var(--bg); color:var(--ivory); padding:clamp(14px,2.4vw,30px); min-height:100vh; line-height:1.45; } .num{font-family:'Space Grotesk',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em} .wrap{max-width:1240px;margin:0 auto} header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap; padding-bottom:18px;border-bottom:1px solid var(--line)} .brand{display:flex;flex-direction:column;gap:4px} .eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold);font-weight:600} .title{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(28px,4.4vw,46px);line-height:1; color:var(--ivory)} .title b{color:var(--gold-g);font-weight:600;font-style:italic} .subtitle{font-size:13px;color:var(--muted);margin-top:6px} .meta{text-align:right;font-size:12px;color:var(--muted)} .meta .live{display:inline-flex;align-items:center;gap:7px;color:var(--gold-l);font-weight:600; font-size:12px;letter-spacing:.04em} .dot{width:8px;height:8px;border-radius:50%;background:var(--gold-g);box-shadow:0 0 0 0 rgba(228,199,106,.6); animation:pulse 2s infinite} @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(228,199,106,.55)}70%{box-shadow:0 0 0 9px rgba(228,199,106,0)}100%{box-shadow:0 0 0 0 rgba(228,199,106,0)}} .meta .src{margin-top:5px;color:var(--muted2);font-size:11px} .brief{margin-top:18px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:stretch} .brief-card{background:linear-gradient(160deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px} .brief-tag{font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600} .brief-signal{border-left:3px solid var(--gold)} .brief-signal .brief-tag{color:var(--gold-l)} .brief-risk{border-left:3px solid var(--bad)} .brief-risk .brief-tag{color:var(--bad)} .brief-card .lead{font-family:'Fraunces',serif;font-size:16px;font-weight:500;color:var(--ivory)} .brief-card .desc{font-size:12.5px;color:var(--muted);line-height:1.5} .brief-card .desc b{color:var(--blush);font-weight:600} .kpis{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:14px;margin-top:14px} .kpi{background:linear-gradient(165deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden} .kpi.hero{background:linear-gradient(150deg,var(--burg-d),#2A0F1A 70%);border:1px solid var(--burg-l)} .kpi.hero::after{content:"";position:absolute;inset:0;background: radial-gradient(420px 180px at 110% -30%,rgba(228,199,106,.25),transparent 60%);pointer-events:none} .kpi .klabel{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600} .kpi.hero .klabel{color:var(--gold-g)} .kpi .kval{font-family:'Space Grotesk',monospace;font-weight:600;font-size:clamp(22px,2.7vw,30px); margin-top:9px;color:var(--ivory);letter-spacing:-.02em} .kpi.hero .kval{color:#fff;font-size:clamp(26px,3.4vw,38px)} .kpi .ksub{font-size:11.5px;color:var(--muted);margin-top:7px;display:flex;align-items:center;gap:7px;flex-wrap:wrap} .kpi.hero .ksub{color:var(--blush)} .chip{font-family:'Space Grotesk',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px; display:inline-flex;align-items:center;gap:3px} .chip.up{background:rgba(95,178,138,.16);color:var(--good)} .chip.down{background:rgba(217,106,120,.16);color:var(--bad)} .kpi .baht{font-size:.62em;color:var(--gold-l);font-family:'Inter Tight';font-weight:600;margin-right:3px; vertical-align:.06em} .kpi.hero .baht{color:var(--gold-g)} .grid{display:grid;gap:14px;margin-top:14px} .g2{grid-template-columns:1.7fr 1fr} .g2b{grid-template-columns:1fr 1fr} .card{background:linear-gradient(168deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:18px} .card h3{font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--ivory); display:flex;align-items:center;gap:9px} .card h3 .ix{font-family:'Space Grotesk';font-size:11px;color:var(--gold);font-weight:600; border:1px solid var(--line2);border-radius:6px;padding:2px 6px;letter-spacing:.05em} .card .csub{font-size:11.5px;color:var(--muted2);margin-top:3px;margin-bottom:12px} .chead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap} .pills{display:flex;gap:6px;flex-wrap:wrap} .pill{font-size:11px;font-weight:600;font-family:'Inter Tight';padding:5px 11px;border-radius:20px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer; display:inline-flex;align-items:center;gap:6px;transition:.18s;user-select:none} .pill:hover{border-color:var(--gold);color:var(--blush)} .pill .sw{width:9px;height:9px;border-radius:50%} .pill.off{opacity:.4} .chartbox{position:relative;height:300px;margin-top:6px} .chartbox.sm{height:240px} canvas{max-width:100%} .latest{background: linear-gradient(150deg,rgba(184,146,46,.14),transparent 55%), linear-gradient(168deg,var(--surf2),var(--bg2)); border:1px solid var(--gold);border-radius:var(--r);padding:18px;position:relative;overflow:hidden} .latest::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px; background:radial-gradient(circle,rgba(228,199,106,.18),transparent 70%)} .latest .lt{display:flex;justify-content:space-between;align-items:center;gap:10px} .latest .tag{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-g);font-weight:700} .latest .lbadge{font-size:10.5px;color:var(--bg);background:var(--gold-g);font-weight:700; padding:3px 9px;border-radius:20px;letter-spacing:.03em} .latest .ldate{font-family:'Fraunces',serif;font-size:15px;color:var(--blush);margin-top:10px;font-weight:500} .latest .lbig{font-family:'Space Grotesk',monospace;font-weight:600;font-size:clamp(30px,5vw,44px); color:#fff;margin-top:2px;letter-spacing:-.02em} .latest .lbig .baht{font-size:.5em;color:var(--gold-g);font-family:'Inter Tight';font-weight:700;vertical-align:.12em;margin-right:4px} .latest .lrow{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0; border-top:1px solid rgba(255,255,255,.06)} .latest .lrow:first-of-type{margin-top:12px} .latest .lrow span:first-child{color:var(--muted)} .latest .lrow span:last-child{font-family:'Space Grotesk';font-weight:600;color:var(--ivory)} .latest .lnote{font-size:11px;color:var(--muted2);margin-top:12px;line-height:1.5} .tablewrap{overflow-x:auto;margin-top:4px;border-radius:10px} table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px} th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted2);font-weight:600; text-align:right;padding:9px 10px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--surf)} th:first-child{text-align:left} td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.045);text-align:right; font-family:'Space Grotesk';font-weight:500;color:var(--blush)} td:first-child{text-align:left;font-family:'Inter Tight';color:var(--muted);font-weight:500} tr:hover td{background:rgba(184,146,46,.05)} td.tot{color:var(--gold-l);font-weight:600} td.zero{color:var(--muted2);opacity:.5} tr.newest td{background:rgba(184,146,46,.10)} tr.newest td:first-child{color:var(--gold-g);font-weight:600} .tbadge{font-size:9px;background:var(--gold-g);color:var(--bg);font-weight:700;padding:1px 6px;border-radius:10px;margin-left:7px;letter-spacing:.04em} .grp-stats{display:flex;flex-direction:column;gap:10px;margin-top:8px} .grp-card{border-radius:12px;padding:14px 16px;border:1px solid var(--line)} .grp-card.mall{background:linear-gradient(160deg,rgba(184,146,46,.16),var(--bg2));border-color:var(--gold)} .grp-card.central{background:linear-gradient(160deg,rgba(118,29,53,.24),var(--bg2));border-color:var(--burg-l)} .grp-card .grp-name{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--ivory); display:flex;justify-content:space-between;align-items:baseline} .grp-card .grp-pct{font-family:'Space Grotesk',monospace;font-size:13px;color:var(--gold-l);font-weight:600} .grp-card .grp-total{font-family:'Space Grotesk',monospace;font-weight:600;font-size:22px;margin-top:5px; color:#fff;letter-spacing:-.02em} .grp-card .grp-total .baht{font-size:.62em;color:var(--gold-g);font-family:'Inter Tight';font-weight:600;margin-right:2px} .grp-card .grp-stores{margin-top:11px;display:flex;flex-direction:column;gap:6px} .grp-card .grp-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted); padding-top:6px;border-top:1px solid rgba(255,255,255,.06)} .grp-card .grp-row:first-child{border-top:none;padding-top:0} .grp-card .grp-row span:last-child{color:var(--blush);font-family:'Space Grotesk';font-weight:500} .grp-card .grp-mtd{margin-top:9px;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between; align-items:center;padding:7px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1)} .grp-card .grp-mtd b{color:var(--gold-l);font-family:'Space Grotesk',monospace;font-weight:600;font-size:13px} .bs-axis{display:flex;gap:6px;margin-top:4px} .bs-axis-pill{font-size:12.5px;font-weight:600;font-family:'Inter Tight';padding:8px 16px;border-radius:10px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer;transition:.18s;user-select:none} .bs-axis-pill:hover{border-color:var(--gold);color:var(--blush)} .bs-axis-pill.active{background:linear-gradient(135deg,var(--gold),var(--gold-l));border-color:var(--gold);color:#241204} .bs-branch-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px} .bs-branch-tab{font-size:11.5px;font-weight:600;font-family:'Inter Tight';padding:6px 13px;border-radius:20px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer;transition:.18s;user-select:none} .bs-branch-tab:hover{border-color:var(--gold);color:var(--blush)} .bs-branch-tab.active{background:var(--burg);border-color:var(--burg-l);color:var(--ivory)} .bs-list{display:flex;flex-direction:column;gap:9px;margin-top:14px} .bs-item{display:flex;align-items:center;gap:13px;padding:12px 15px;border-radius:11px; background:linear-gradient(160deg,var(--surf2),var(--bg2));border:1px solid var(--line)} .bs-item.b1{border-color:var(--gold);background:linear-gradient(160deg,rgba(184,146,46,.14),var(--bg2))} .bs-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center; font-family:'Space Grotesk',monospace;font-weight:700;font-size:13px;flex-shrink:0; background:var(--bg2);border:1px solid var(--line2);color:var(--muted)} .bs-item.b1 .bs-rank{background:linear-gradient(135deg,#E4C76A,#B8922E);color:#241204;border:none} .bs-info{flex:1;min-width:0} .bs-name{font-family:'Fraunces',serif;font-weight:600;font-size:14.5px;color:var(--ivory); white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .bs-size{font-size:11px;color:var(--gold-l);margin-top:3px;font-weight:600} .bs-qty{text-align:right;flex-shrink:0} .bs-qty .bq-num{font-family:'Space Grotesk',monospace;font-weight:700;font-size:18px;color:var(--blush)} .bs-qty .bq-label{font-size:9.5px;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-top:1px} .bs-bar{height:4px;border-radius:2px;margin-top:8px;background:var(--line2);overflow:hidden} .bs-bar i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-g))} .bs-month-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;max-height:78px;overflow-y:auto; padding:2px} .bs-mpill{font-size:11.5px;font-weight:600;font-family:'Inter Tight';padding:6px 12px;border-radius:18px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer; transition:.18s;user-select:none;white-space:nowrap} .bs-mpill:hover{border-color:var(--gold);color:var(--blush)} .bs-mpill.active{background:linear-gradient(135deg,var(--burg),var(--burg-d));border-color:var(--gold);color:var(--ivory)} .rank-list{display:flex;flex-direction:column;gap:10px;margin-top:8px} .rank-item{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:12px; background:linear-gradient(160deg,var(--surf2),var(--bg2));border:1px solid var(--line)} .rank-item.r1{border-color:var(--gold);background:linear-gradient(160deg,rgba(184,146,46,.16),var(--bg2))} .rank-badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center; font-family:'Space Grotesk',monospace;font-weight:700;font-size:15px;flex-shrink:0} .rank-item.r1 .rank-badge{background:linear-gradient(135deg,#E4C76A,#B8922E);color:#241204} .rank-item.r2 .rank-badge{background:linear-gradient(135deg,#D6D6D6,#9A9A9A);color:#1c1c1c} .rank-item.r3 .rank-badge{background:linear-gradient(135deg,#D79A6E,#A1623B);color:#241204} .rank-info{flex:1;min-width:0} .rank-name{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--ivory)} .rank-sub{font-size:11.5px;color:var(--muted);margin-top:2px} .rank-val{text-align:right;flex-shrink:0} .rank-val .rv-amt{font-family:'Space Grotesk',monospace;font-weight:600;font-size:17px;color:var(--blush)} .rank-val .rv-amt .baht{font-size:.65em;color:var(--gold-l);font-family:'Inter Tight';margin-right:2px} .rank-val .rv-pct{font-size:11px;color:var(--gold-l);margin-top:2px;font-weight:600} .monthpicker{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px} .mpill{font-size:12px;font-weight:600;font-family:'Inter Tight';padding:7px 14px;border-radius:20px; border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer; transition:.18s;user-select:none;white-space:nowrap} .mpill:hover{border-color:var(--gold);color:var(--blush)} .mpill.active{background:linear-gradient(135deg,var(--burg),var(--burg-d));border-color:var(--gold); color:var(--ivory);box-shadow:0 0 0 1px rgba(184,146,46,.4) inset} .fm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px} .fm-stat{background:linear-gradient(165deg,var(--surf2),var(--bg2));border:1px solid var(--line); border-radius:12px;padding:14px 16px} .fm-stat .fm-label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600} .fm-stat .fm-val{font-family:'Space Grotesk',monospace;font-weight:600;font-size:clamp(20px,2.2vw,26px); margin-top:7px;color:var(--ivory);letter-spacing:-.02em} .fm-stat .fm-val .baht{font-size:.6em;color:var(--gold-l);font-family:'Inter Tight';font-weight:600;margin-right:2px} .fm-stat .fm-cmp{font-size:11.5px;margin-top:8px;display:flex;align-items:center;gap:6px;color:var(--muted)} .fm-stat.fm-main{border:1px solid var(--gold);background:linear-gradient(160deg,rgba(184,146,46,.12),var(--bg2))} .fm-na{color:var(--muted2);font-style:italic} .fm-stores{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px} .fm-store{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:center} .fm-store .fs-name{font-size:10px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.04em} .fm-store .fs-val{font-family:'Space Grotesk';font-weight:600;font-size:14px;color:var(--blush);margin-top:5px} .fm-store .fs-bar{height:3px;border-radius:2px;margin-top:7px;background:var(--line2);overflow:hidden} .fm-store .fs-bar i{display:block;height:100%;border-radius:2px} .ins{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px} .icard{background:linear-gradient(168deg,var(--surf),var(--bg2));border:1px solid var(--line); border-radius:var(--r);padding:16px 17px;border-top:2px solid var(--gold)} .icard.risk{border-top-color:var(--bad)} .icard.win{border-top-color:var(--good)} .icard .ik{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--gold-l)} .icard.risk .ik{color:var(--bad)}.icard.win .ik{color:var(--good)} .icard .ih{font-family:'Fraunces',serif;font-size:15px;font-weight:600;margin-top:8px;color:var(--ivory);line-height:1.3} .icard .ip{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55} .icard .ip b{color:var(--blush);font-weight:600} .icard .reco{font-size:11.5px;color:var(--gold-g);margin-top:10px;display:flex;gap:7px;line-height:1.5} .icard .reco::before{content:"→";color:var(--gold);font-weight:700} footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line); font-size:11px;color:var(--muted2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px} @media(max-width:920px){ .kpis{grid-template-columns:1fr 1fr} .g2,.g2b{grid-template-columns:1fr} .ins{grid-template-columns:1fr} .brief{grid-template-columns:1fr} .fm-grid{grid-template-columns:1fr} .fm-stores{grid-template-columns:repeat(3,1fr)} } @media(max-width:560px){.kpis{grid-template-columns:1fr}.fm-stores{grid-template-columns:repeat(2,1fr)}} 
+/* ---------- estimate section ---------- */
+.est-section{margin-top:14px}
+.est-hero{background:linear-gradient(150deg,rgba(118,29,53,.28),rgba(184,146,46,.10),var(--bg2));
+  border:1px solid var(--gold);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden;margin-bottom:14px}
+.est-hero::before{content:"";position:absolute;top:-30px;right:-30px;width:180px;height:180px;
+  background:radial-gradient(circle,rgba(228,199,106,.14),transparent 70%);pointer-events:none}
+.est-hero .est-eyebrow{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold-g);font-weight:700}
+.est-hero .est-label{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--blush);margin-top:6px}
+.est-hero .est-big{font-family:'Space Grotesk',monospace;font-weight:700;font-size:clamp(32px,5vw,48px);
+  color:#fff;margin-top:4px;letter-spacing:-.025em}
+.est-hero .est-big .baht{font-size:.5em;color:var(--gold-g);font-family:'Inter Tight';font-weight:700;vertical-align:.12em;margin-right:4px}
+.est-hero .est-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;padding-top:12px;
+  border-top:1px dashed rgba(255,255,255,.12)}
+.est-hero .est-meta-item{display:flex;flex-direction:column;gap:3px}
+.est-hero .est-meta-item .em-label{font-size:10px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.est-hero .est-meta-item .em-val{font-family:'Space Grotesk',monospace;font-weight:600;font-size:14px;color:var(--gold-l)}
+.est-branches{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.est-card{background:linear-gradient(165deg,var(--surf2),var(--bg2));border:1px solid var(--line);
+  border-radius:12px;padding:14px 15px;position:relative;overflow:hidden}
+.est-card .ec-bar-bg{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--line2)}
+.est-card .ec-bar-fg{position:absolute;bottom:0;left:0;height:3px;border-radius:0 2px 2px 0;transition:.4s}
+.est-card .ec-name{font-size:10px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.est-card .ec-mtd{font-family:'Space Grotesk',monospace;font-weight:600;font-size:14px;color:var(--blush);margin-top:6px}
+.est-card .ec-est{font-family:'Space Grotesk',monospace;font-weight:700;font-size:17px;color:#fff;margin-top:3px;letter-spacing:-.01em}
+.est-card .ec-est .baht{font-size:.6em;color:var(--gold-g);font-family:'Inter Tight';font-weight:600;margin-right:2px;vertical-align:.08em}
+.est-card .ec-days{font-size:11px;color:var(--muted2);margin-top:6px}
+.est-card .ec-days b{color:var(--gold-l);font-weight:600}
+.est-card .ec-prog{margin-top:8px;height:4px;border-radius:2px;background:var(--line2);overflow:hidden}
+.est-card .ec-prog i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--burg),var(--gold))}
+@media(max-width:920px){.est-branches{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.est-branches{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- achievement ---------- */
+.achv-wrap{display:grid;grid-template-columns:1fr 1.8fr;gap:14px;margin-top:14px}
+.achv-hero{background:linear-gradient(150deg,rgba(118,29,53,.32),rgba(184,146,46,.12),var(--bg2));
+  border:1px solid var(--gold);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden}
+.achv-hero::before{content:"";position:absolute;top:-30px;right:-30px;width:160px;height:160px;
+  background:radial-gradient(circle,rgba(228,199,106,.15),transparent 70%);pointer-events:none}
+.achv-hero .ah-eye{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold-g);font-weight:700}
+.achv-hero .ah-label{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--blush);margin-top:6px}
+.achv-hero .ah-pct{font-family:'Space Grotesk',monospace;font-weight:700;font-size:clamp(48px,7vw,72px);
+  color:#fff;line-height:1;margin-top:4px;letter-spacing:-.03em}
+.achv-hero .ah-pct span{font-size:.45em;color:var(--gold-g);font-family:'Inter Tight';font-weight:600;vertical-align:.2em}
+.achv-hero .ah-row{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;
+  border-top:1px dashed rgba(255,255,255,.1)}
+.achv-hero .ah-row:first-of-type{margin-top:14px}
+.achv-hero .ah-row span:first-child{color:var(--muted)}
+.achv-hero .ah-row span:last-child{font-family:'Space Grotesk';font-weight:600;color:var(--ivory)}
+.achv-grid{display:flex;flex-direction:column;gap:10px}
+.achv-card{background:linear-gradient(165deg,var(--surf2),var(--bg2));border:1px solid var(--line);
+  border-radius:12px;padding:13px 16px}
+.achv-card .ac-top{display:flex;justify-content:space-between;align-items:center}
+.achv-card .ac-name{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--ivory)}
+.achv-card .ac-pct{font-family:'Space Grotesk',monospace;font-weight:700;font-size:16px}
+.achv-card .ac-bar-wrap{margin-top:9px;height:8px;border-radius:4px;background:var(--line2);overflow:hidden;position:relative}
+.achv-card .ac-bar{height:100%;border-radius:4px;transition:.6s;position:relative}
+.achv-card .ac-bar::after{content:"";position:absolute;top:0;right:0;bottom:0;
+  width:2px;background:rgba(255,255,255,.3);border-radius:1px}
+.achv-card .ac-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-top:5px}
+.achv-card .ac-nums b{color:var(--blush);font-family:'Space Grotesk';font-weight:600}
+@media(max-width:920px){.achv-wrap{grid-template-columns:1fr}}
+
+/* ---------- avg per bill ---------- */
+.bills-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.bills-overview{background:linear-gradient(150deg,rgba(184,146,46,.14),transparent 50%),
+  linear-gradient(168deg,var(--surf2),var(--bg2));border:1px solid var(--gold);
+  border-radius:var(--r);padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.bills-overview .bo-eye{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold-g);font-weight:700}
+.bills-overview .bo-label{font-family:'Fraunces',serif;font-size:15px;font-weight:500;color:var(--blush);margin-top:4px}
+.bills-overview .bo-tabs{display:flex;gap:8px;margin-top:10px}
+.bills-overview .bo-tab{flex:1;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;
+  padding:10px 12px;text-align:center;cursor:pointer;transition:.18s}
+.bills-overview .bo-tab.active{border-color:var(--gold);background:rgba(184,146,46,.10)}
+.bills-overview .bo-tab .bt-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted2);font-weight:600}
+.bills-overview .bo-tab .bt-num{font-family:'Space Grotesk',monospace;font-weight:700;
+  font-size:clamp(28px,4vw,40px);color:#fff;margin-top:4px;letter-spacing:-.02em}
+.bills-overview .bo-tab .bt-num span{font-size:.45em;color:var(--gold-g);font-family:'Inter Tight';
+  font-weight:600;vertical-align:.2em;margin-right:3px}
+.bills-overview .bo-tab .bt-sub{font-size:11px;color:var(--muted2);margin-top:3px}
+.bills-table{display:flex;flex-direction:column;gap:8px}
+.bills-row{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  background:linear-gradient(160deg,var(--surf2),var(--bg2));border:1px solid var(--line);
+  border-radius:11px}
+.bills-row .br-name{font-family:'Fraunces',serif;font-weight:600;font-size:13.5px;
+  color:var(--ivory);flex:1}
+.bills-row .br-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bills-col{text-align:right;min-width:80px}
+.bills-col .bc-val{font-family:'Space Grotesk',monospace;font-weight:700;font-size:14px;color:#fff}
+.bills-col .bc-val .baht{font-size:.7em;color:var(--gold-l);font-family:'Inter Tight';
+  font-weight:600;margin-right:2px}
+.bills-col .bc-label{font-size:10px;color:var(--muted2);margin-top:2px;letter-spacing:.04em}
+.bills-head{display:flex;align-items:center;gap:12px;padding:4px 14px;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.bills-head .br-name{flex:1}
+.bills-mode-pills{display:flex;gap:6px;margin-top:10px}
+.bills-mode-pill{font-size:11.5px;font-weight:600;font-family:'Inter Tight';padding:6px 14px;
+  border-radius:18px;border:1px solid var(--line2);color:var(--muted);background:transparent;
+  cursor:pointer;transition:.18s;user-select:none}
+.bills-mode-pill:hover{border-color:var(--gold);color:var(--blush)}
+.bills-mode-pill.active{background:linear-gradient(135deg,var(--burg),var(--burg-d));
+  border-color:var(--gold);color:var(--ivory)}
+@media(max-width:920px){.bills-grid{grid-template-columns:1fr}}
+
+/* ---------- seller performance ---------- */
+.sp-controls{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-top:4px}
+.sp-group{display:flex;flex-direction:column;gap:5px}
+.sp-glabel{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:700}
+.sp-pills{display:flex;gap:6px;flex-wrap:wrap;max-height:64px;overflow-y:auto;padding:1px}
+.sp-pill{font-size:11.5px;font-weight:600;font-family:'Inter Tight';padding:6px 13px;border-radius:18px;
+  border:1px solid var(--line2);color:var(--muted);background:transparent;cursor:pointer;transition:.18s;
+  user-select:none;white-space:nowrap}
+.sp-pill:hover{border-color:var(--gold);color:var(--blush)}
+.sp-pill.active{background:linear-gradient(135deg,var(--burg),var(--burg-d));border-color:var(--gold);color:var(--ivory)}
+.sp-note{font-size:11px;color:var(--muted2);margin-top:12px;padding:9px 12px;border-radius:9px;
+  background:rgba(184,146,46,.07);border-left:2px solid var(--gold);line-height:1.55}
+.sp-note b{color:var(--gold-l);font-weight:600}
+.sp-tablewrap{overflow-x:auto;margin-top:12px;border-radius:10px}
+table.sp-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+table.sp-table th{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted2);
+  font-weight:700;text-align:right;padding:9px 10px;border-bottom:1px solid var(--line2);
+  background:var(--surf);white-space:nowrap}
+table.sp-table th:nth-child(1),table.sp-table th:nth-child(2){text-align:left}
+table.sp-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.045);text-align:right;
+  font-family:'Space Grotesk';font-weight:500;color:var(--blush);white-space:nowrap}
+table.sp-table td:nth-child(2){text-align:left;font-family:'Fraunces',serif;font-weight:600;color:var(--ivory)}
+table.sp-table tr:hover td{background:rgba(184,146,46,.05)}
+.sp-rk{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:11.5px;background:var(--bg2);
+  border:1px solid var(--line2);color:var(--muted)}
+tr.sp-top1 .sp-rk{background:linear-gradient(135deg,#E4C76A,#B8922E);color:#241204;border:none}
+tr.sp-top2 .sp-rk{background:linear-gradient(135deg,#D6D6D6,#9A9A9A);color:#1c1c1c;border:none}
+tr.sp-top3 .sp-rk{background:linear-gradient(135deg,#D79A6E,#A1623B);color:#241204;border:none}
+.sp-idx{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.sp-idxbar{width:46px;height:5px;border-radius:3px;background:var(--line2);overflow:hidden;position:relative}
+.sp-idxbar i{display:block;height:100%;border-radius:3px}
+.sp-idxbar::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.28)}
+.sp-idxnum{font-family:'Space Grotesk';font-weight:700;min-width:38px;text-align:right}
+.sp-empty{padding:28px;text-align:center;color:var(--muted2);font-size:12.5px}
+.sp-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.sp-scard{background:linear-gradient(165deg,var(--surf2),var(--bg2));border:1px solid var(--line);
+  border-radius:11px;padding:12px 14px}
+.sp-scard .ss-l{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:700}
+.sp-scard .ss-v{font-family:'Space Grotesk';font-weight:700;font-size:18px;color:#fff;margin-top:5px}
+.sp-scard .ss-v .baht{font-size:.62em;color:var(--gold-g);font-family:'Inter Tight';font-weight:600;margin-right:2px}
+.sp-scard .ss-s{font-size:10.5px;color:var(--muted2);margin-top:3px}
+@media(max-width:920px){.sp-sum{grid-template-columns:repeat(2,1fr)}}
+
+.sp-pill.allbr{background:linear-gradient(135deg,var(--gold),var(--gold-l));border-color:var(--gold);color:#241204}
+.sp-pill.allbr.active{background:linear-gradient(135deg,var(--gold-l),var(--gold-g));box-shadow:0 0 0 1px var(--gold-g) inset}
+.sp-branchchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.sp-bchip{font-size:9.5px;font-weight:600;font-family:'Inter Tight';padding:2px 7px;border-radius:8px;
+  background:var(--bg2);color:var(--muted);border:1px solid var(--line2);white-space:nowrap}
+.sp-bchip b{color:var(--blush);font-family:'Space Grotesk';font-weight:700;margin-left:3px}
+td.sp-namecell{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+</style>
 
 <div class="wrap">
   <header>
     <div class="brand">
       <span class="eyebrow">Offline Retail</span>
       <h1 class="title">THE <b>FINERY</b></h1>
-      <div class="subtitle">Daily Sales Update — รายงานยอดขายหน้าร้าน</div>
+      <div class="subtitle">Daily Sales Update — รายงานยอดขายหน้าร้าน 5 สาขา</div>
     </div>
     <div class="meta">
-      <div class="live"><span class="dot"></span>LIVE · Auto-update</div>
+      <div class="live"><span class="dot"></span>LIVE · เชื่อมต่อ Google Drive</div>
       <div id="updated"></div>
-      <div class="src">ที่มา: Google Sheet → data.json</div>
+      <div class="src">ที่มา: The Finery – Offline Daily Sales Update · D-1 (refresh เที่ยง)</div>
     </div>
   </header>
 
+  <!-- BRIEF -->
   <div class="brief">
-    <div class="brief-card brief-signal" style="min-width: 260px;">
+    <div class="brief-card brief-signal" style="min-width:260px">
       <span class="brief-tag">Signal · โฟกัสวันนี้</span>
-      <span class="lead" id="sig-lead">📊 กำลังโหลด...</span>
+      <span class="lead" id="sig-lead"></span>
       <span class="desc" id="sig-desc"></span>
     </div>
     <div class="brief-card brief-risk">
       <span class="brief-tag">⚠ Exception · ต้องจับตา</span>
-      <span class="lead" id="risk-lead">✅ กำลังตรวจสอบ...</span>
+      <span class="lead" id="risk-lead"></span>
       <span class="desc" id="risk-desc"></span>
     </div>
   </div>
 
-  <div class="kpis" id="kpis">
-    <div class="kpi hero">
-      <div class="klabel">กำลังโหลดข้อมูล...</div>
-      <div class="kval">⏳</div>
+  <!-- KPI -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- CHARTS -->
+  <div class="grid g2">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <h3><span class="ix">01</span> แนวโน้มรายเดือน · แยกตามสาขา</h3>
+          <div class="csub">ธ.ค. 2025 – มิ.ย. 2026 · กดที่ชื่อสาขาเพื่อซ่อน/แสดง (ก.ค. = ข้อมูลบางส่วน)</div>
+        </div>
+      </div>
+      <div class="pills" id="legend"></div>
+      <div class="chartbox"><canvas id="monthly"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="ix">02</span> สัดส่วนยอดขาย</h3>
+      <div class="csub">รวมทั้งงวด · แยกตามสาขา</div>
+      <div class="chartbox sm"><canvas id="share"></canvas></div>
     </div>
   </div>
 
-  <nav class="side-tabs" id="sideTabs">
-    <button class="stab active" data-tab="overview"><span class="stab-ic">01</span><span class="stab-tx">ภาพรวม</span></button>
-    <button class="stab" data-tab="daily"><span class="stab-ic">03</span><span class="stab-tx">รายวัน</span></button>
-    <button class="stab" data-tab="insights"><span class="stab-ic">IN</span><span class="stab-tx">Insights</span></button>
-  </nav>
+  <!-- GROUP VIEW -->
+  <div class="grid g2">
+    <div class="card">
+      <h3><span class="ix">G</span> สัดส่วนยอดขาย · แยกตามกลุ่มสาขา</h3>
+      <div class="csub">The Mall (Paragon + Emporium) vs Central (Ladprao + Central World + Pinklao)</div>
+      <div class="chartbox sm"><canvas id="groupShare"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="ix">G</span> ยอดรวมตามกลุ่ม</h3>
+      <div class="csub">รวมทั้งงวด · 7 เดือน</div>
+      <div class="grp-stats" id="grpStats"></div>
+    </div>
+  </div>
 
-  <div class="tab-content">
-    <div class="tab-panel active" data-tabpanel="overview">
-      <div class="grid g2">
-        <div class="card">
-          <h3><span class="ix">01</span> แนวโน้มรายเดือน</h3>
-          <div class="csub">ธ.ค. 2025 – มิ.ย. 2026 · แยกตามสาขา</div>
-          <div class="chartbox"><canvas id="monthly"></canvas></div>
-        </div>
-        <div class="card">
-          <h3><span class="ix">02</span> สัดส่วนยอดขาย</h3>
-          <div class="csub">รวมทั้งงวด</div>
-          <div class="chartbox sm"><canvas id="share"></canvas></div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3><span class="ix">★</span> Top 3 สาขา</h3>
-          <div class="csub" style="margin-bottom: 14px;">จัดอันดับจากยอดรวม</div>
-          <div id="rankList"></div>
+  <!-- RANKING -->
+  <div class="grid">
+    <div class="card">
+      <h3><span class="ix">★</span> Top 3 สาขายอดขายสูงสุด</h3>
+      <div class="csub">จัดอันดับจากยอดรวมทั้งงวด (ธ.ค. 25 – ก.ค. 26)</div>
+      <div class="rank-list" id="rankList"></div>
+    </div>
+  </div>
+
+  <!-- BEST SELLER -->
+  <div class="grid">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <h3><span class="ix">★★</span> สินค้าขายดี (Best Seller)</h3>
+          <div class="csub" id="bsSub">จัดอันดับจากจำนวนชิ้นที่ขายได้ (รวมทุกไซส์)</div>
         </div>
       </div>
+      <div class="bs-axis" id="bsAxis"></div>
+      <div class="bs-branch-tabs" id="bsBranchTabs" style="display:none"></div>
+      <div class="bs-month-picker" id="bsMonthPicker"></div>
+      <div class="bs-list" id="bsList"></div>
+    </div>
+  </div>
+
+  <!-- FULL MONTH VIEW -->
+  <div class="grid">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <h3><span class="ix">M</span> ดูยอดแบบเต็มเดือน · เปรียบเทียบ MoM / YoY</h3>
+          <div class="csub">เลือกเดือนที่ต้องการดู — เทียบกับเดือนก่อนหน้าและช่วงเดียวกันของปีก่อน</div>
+        </div>
+      </div>
+      <div class="monthpicker" id="monthPicker"></div>
+      <div class="fm-grid" id="fmStats"></div>
+      <div class="fm-stores" id="fmStores"></div>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="chead">
+        <div>
+          <h3><span class="ix">03</span> ยอดขายรายวัน · ภาพรวม</h3>
+          <div class="csub" id="dailysub"></div>
+        </div>
+        <div class="pills" id="rangePills"></div>
+      </div>
+      <div class="chartbox"><canvas id="daily"></canvas></div>
     </div>
 
-    <div class="tab-panel" data-tabpanel="daily">
-      <div class="grid g2">
-        <div class="card">
-          <h3><span class="ix">03</span> ยอดขายรายวัน · 30 วันล่าสุด</h3>
-          <div class="csub">กราฟแนวโน้ม</div>
-          <div class="chartbox"><canvas id="daily"></canvas></div>
-        </div>
-        <div class="latest" id="latest">
-          <div class="lt">
-            <span class="tag">ยอดล่าสุด</span>
-            <span class="lbadge" id="latestBadge">-</span>
-          </div>
-          <div id="latestContent"></div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3><span class="ix">04</span> รายวันล่าสุด · 14 วัน</h3>
-          <div class="csub">แยกตามสาขา (บาท)</div>
-          <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-        </div>
+    <!-- LATEST HIGHLIGHT -->
+    <div class="latest" id="latest"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="grid">
+    <div class="card">
+      <h3><span class="ix">04</span> รายวันล่าสุด · แยกตามสาขา</h3>
+      <div class="csub">14 วันทำการล่าสุด (บาท)</div>
+      <div class="tablewrap"><table id="tbl"></table></div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+
+
+
+
+  <!-- SELLER PERFORMANCE -->
+  <div class="card" style="margin-top:14px;padding:18px">
+    <div class="chead">
+      <div>
+        <h3><span class="ix">SP</span> Performance พนักงานขาย</h3>
+        <div class="csub">จัดอันดับตามยอดขายที่มีส่วนร่วม พร้อมดัชนีเทียบค่าเฉลี่ยสาขา (calibrated)</div>
       </div>
     </div>
+    <div class="sp-controls">
+      <div class="sp-group">
+        <span class="sp-glabel">สาขา</span>
+        <div class="sp-pills" id="spBranch"></div>
+      </div>
+      <div class="sp-group" style="flex:1;min-width:240px">
+        <span class="sp-glabel">ช่วงเวลา</span>
+        <div class="sp-pills" id="spMonth"></div>
+      </div>
+    </div>
+    <div class="sp-sum" id="spSum"></div>
+    <div class="sp-tablewrap"><table class="sp-table" id="spTable"></table></div>
+    <div class="sp-note" id="spNote"></div>
+  </div>
 
-    <div class="tab-panel" data-tabpanel="insights">
-      <div class="card" style="margin-top: 14px;">
-        <h3><span class="ix">IN</span> Insights & Analysis</h3>
-        <div class="csub" style="margin-bottom: 14px;">ข้อมูลเชิงลึกจากยอดขายล่าสุด</div>
-        <div id="insightContent"></div>
+  <!-- AVG PER BILL -->
+  <div class="card" style="margin-top:14px;padding:18px">
+    <div class="chead">
+      <div>
+        <h3><span class="ix">AVG</span> Average per Bill · ยอดเฉลี่ยต่อบิล</h3>
+        <div class="csub">คำนวณจาก col O (ราคาที่ลูกค้าจ่ายต่อ order) ÷ จำนวน unique bills · แยกตามสาขา</div>
+      </div>
+      <div class="bills-mode-pills">
+        <span class="bills-mode-pill active" data-bm="alltime">All Time</span>
+        <span class="bills-mode-pill" data-bm="current">เดือนนี้ (MTD)</span>
+      </div>
+    </div>
+    <div class="bills-grid" style="margin-top:14px">
+      <div class="bills-overview" id="billsOverview"></div>
+      <div>
+        <div class="bills-head">
+          <span class="br-dot" style="background:transparent"></span>
+          <span class="br-name">สาขา</span>
+          <span class="bills-col"><span class="bc-label">AVG/BILL</span></span>
+          <span class="bills-col"><span class="bc-label">BILLS</span></span>
+          <span class="bills-col"><span class="bc-label">REVENUE</span></span>
+        </div>
+        <div class="bills-table" id="billsTable"></div>
       </div>
     </div>
   </div>
+
+  <!-- ACHIEVEMENT -->
+  <div class="card" style="margin-top:14px;padding:0;background:transparent;border:none">
+    <div style="display:flex;align-items:center;gap:9px;padding-bottom:10px">
+      <h3 style="font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--ivory);display:flex;align-items:center;gap:9px">
+        <span class="ix" style="font-family:'Space Grotesk';font-size:11px;color:var(--gold);font-weight:600;border:1px solid var(--line2);border-radius:6px;padding:2px 6px">ACH</span>
+        Achievement vs July Target · แยกตามสาขา
+      </h3>
+    </div>
+    <div class="csub" style="font-size:11.5px;color:var(--muted2);margin-top:-6px;margin-bottom:12px">
+      เปรียบเทียบยอดขาย MTD กับเป้าหมายเดือน ก.ค. 2026 · อัปเดตอัตโนมัติ
+    </div>
+    <div class="achv-wrap">
+      <div class="achv-hero" id="achvHero"></div>
+      <div class="achv-grid" id="achvGrid"></div>
+    </div>
+  </div>
+
+  <!-- ESTIMATE SALES -->
+  <div class="est-section">
+    <div class="card" style="padding:0;background:transparent;border:none">
+      <div style="padding:0 0 10px 0;display:flex;align-items:center;gap:9px">
+        <h3 style="font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--ivory);display:flex;align-items:center;gap:9px">
+          <span class="ix" style="font-family:'Space Grotesk';font-size:11px;color:var(--gold);font-weight:600;border:1px solid var(--line2);border-radius:6px;padding:2px 6px">EST</span>
+          ประมาณการยอดขายทั้งเดือน (Estimate Sales)
+        </h3>
+      </div>
+      <div class="csub" style="font-size:11.5px;color:var(--muted2);margin-top:-6px;margin-bottom:12px">
+        สูตร: (ยอดขาย MTD ÷ จำนวนวันที่มีการขาย) × จำนวนวันทั้งหมดของเดือน · อัปเดตอัตโนมัติทุกวัน
+      </div>
+    </div>
+    <div class="est-hero" id="estHero"></div>
+    <div class="est-branches" id="estBranches"></div>
+  </div>
+
+  <div class="ins" id="insights"></div>
 
   <footer>
-    <span>The Finery · CDG Retail Analytics</span>
-    <span id="foot-tot">—</span>
+    <span>The Finery · CDG Retail Analytics — palette: Burgundy #761D35 · Antique Gold #B8922E · Ivory #FAF4F0</span>
+    <span id="foot-tot"></span>
   </footer>
 </div>
 
-<script>
-// ============================================
-// FETCH & PARSE
-// ============================================
-async function loadDashboard() {
-  try {
-    const response = await fetch('./data.json');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const jsonData = await response.json();
-    
-    const DATA = parseData(jsonData.data);
-    renderDashboard(DATA);
-    
-  } catch (error) {
-    console.error('❌ Error:', error);
-    document.getElementById('kpis').innerHTML = `<div class="card" style="grid-column:1/-1;color:var(--bad)">❌ Error loading data: ${error.message}</div>`;
+<script>const DATA = {"months":["December 2025","January 2026","February 2026","March 2026","April 2026","May 2026","June 2026","July 2026"],"monthly":{"Central Ladprao":[0.0,444297.0,324999.5,341356.5,336695.0,373550.0,268925.0,243683.5],"Central Pinklao":[181231.5,172088.5,85638.0,100780.0,42779.0,75690.0,62053.5,68371.5],"Siam Paragon":[685350.0,497600.0,415300.0,392910.0,497270.0,271780.0,603520.0,522059.0],"Central World":[228592.5,221645.0,170689.0,190260.5,133498.0,245822.0,256714.0,207306.0],"Emporium":[0.0,0.0,0.0,0.0,270621.0,226049.5,199344.5,159494.0]},"daily":[["12/01/2025",0,7665,6050,4384.2,0,18099.2],["12/02/2025",0,1390,32290,1590,0,35270],["12/03/2025",0,0,14410,0,0,14410],["12/04/2025",0,2831,5960,1490,0,10281],["12/05/2025",0,5483,10330,19613.2,0,35426.2],["12/06/2025",0,7252,41740,9050.2,0,58042.2],["12/07/2025",0,1490,9340,5900.1,0,16730.1],["12/08/2025",0,1890,21560,17841.55,0,41291.55],["12/09/2025",0,2831,13910,1390,0,18131],["12/10/2025",0,7437,20780,8833,0,37050],["12/11/2025",0,2831,27230,13275,0,43336],["12/12/2025",0,0,1490,4885.1,0,6375.1],["12/13/2025",0,5021,5260,3591,0,13872],["12/14/2025",0,0,37740,10710.2,0,48450.2],["12/15/2025",0,1790,12030,0,0,13820],["12/16/2025",0,6386,16290,5683,0,28359],["12/17/2025",0,8591,11740,3753,0,24084],["12/18/2025",0,3116,8840,3280,0,15236],["12/19/2025",0,3721,13820,1490,0,19031],["12/20/2025",0,1790,22160,9885.75,0,33835.75],["12/21/2025",0,6362,35970,10218.2,0,52550.2],["12/22/2025",0,8182,12730,16945,0,37857],["12/23/2025",0,1490,24970,10967,0,37427],["12/24/2025",0,11248.5,28610,0,0,39858.5],["12/25/2025",0,2801,27310,13395,0,43506],["12/26/2025",0,7213,26420,1490,0,35123],["12/27/2025",0,17192,35660,7436,0,60288],["12/28/2025",0,11727,53960,13029,0,78716],["12/29/2025",0,13162,23560,3580,0,40302],["12/30/2025",0,11989,35870,15243,0,63102],["12/31/2025",0,18350,47320,9644,0,75314],["01/01/2026",27289,7962,27050,22988,0,85289],["01/02/2026",9523,8851,48170,9094,0,75638],["01/03/2026",16182,20034,31790,0,0,68006],["01/04/2026",34774,4970,24460,3280,0,67484],["01/05/2026",13011.5,1390,18390,10486,0,43277.5],["01/06/2026",19187,4270,12820,19925.5,0,56202.5],["01/07/2026",12565,5773,18380,6671,0,43389],["01/08/2026",0,0,2980,13883,0,16863],["01/09/2026",12732,1490,20980,4816,0,40018],["01/10/2026",22871,0,23560,690,0,47121],["01/11/2026",11640,7319,12720,17971,0,49650],["01/12/2026",5921,4701,12920,3890,0,27432],["01/13/2026",0,3211,0,12554,0,15765],["01/14/2026",7886,6953,6160,2880,0,23879],["01/15/2026",27289,3021,10030,1390,0,41730],["01/16/2026",15589.5,8273,7050,2880,0,33792.5],["01/17/2026",14194,17444.5,36070,5380,0,73088.5],["01/18/2026",17683,1390,16690,7501,0,43264],["01/19/2026",1490,0,11430,1490,0,14410],["01/20/2026",9417,0,6760,5066,0,21243],["01/21/2026",9217,0,37190,9159,0,55566],["01/22/2026",9327,2080,0,7586,0,18993],["01/23/2026",2980,0,4470,3021,0,10471],["01/24/2026",23108,13398.5,20270,0,0,56776.5],["01/25/2026",18998,5860,22160,8350,0,55368],["01/26/2026",6491,5333,2080,5306,0,19210],["01/27/2026",25714,4131,7850,7782.5,0,45477.5],["01/28/2026",9594,4023,12830,8643,0,35090],["01/29/2026",17520,7401,8840,8006,0,41767],["01/30/2026",36444,7692.5,10320,3830,0,58286.5],["01/31/2026",5660,15117,23180,7126,0,51083],["02/01/2026",16854,0,13610,3380,0,33844],["02/02/2026",17826,0,12620,4321,0,34767],["02/03/2026",7211,0,12530,2831,0,22572],["02/04/2026",17668,2831,5960,0,0,26459],["02/05/2026",14512,0,13230,11775,0,39517],["02/06/2026",0,0,10740,9337,0,20077],["02/07/2026",5760,4383,4570,12886,0,27599],["02/08/2026",8994,11282,8840,4131,0,33247],["02/09/2026",11175,2831,10630,7921,0,32557],["02/10/2026",14671,1490,16300,4391,0,36852],["02/11/2026",6053,0,12740,4791,0,23584],["02/12/2026",14234,7152,9540,10239,0,41165],["02/13/2026",8301,890,30220,2280,0,41691],["02/14/2026",8186,4221,16690,6476,0,35573],["02/15/2026",16429,3521,26240,2831,0,49021],["02/16/2026",5170,4226,36030,0,0,45426],["02/17/2026",19688,1790,8640,2166,0,32284],["02/18/2026",6944,0,27850,15145,0,49939],["02/19/2026",15467,5513,4470,9932,0,35382],["02/20/2026",6676,5813,37940,12305,0,62734],["02/21/2026",8950,4870,6060,11378,0,31258],["02/22/2026",8116,8344,2880,10432,0,29772],["02/23/2026",14848.5,2736,32740,1990,0,52314.5],["02/24/2026",6870,0,0,5472,0,12342],["02/25/2026",15117,0,8750,4023,0,27890],["02/26/2026",11827,2831,9550,5486,0,29694],["02/27/2026",25391,5103,8560,2880,0,41934],["02/28/2026",12061,5811,27370,1890,0,47132],["03/01/2026",7931,8550,16400,6096,0,38977],["03/02/2026",1790,0,22810,1890,0,26490],["03/03/2026",14875,4470,12130,9257,0,40732],["03/04/2026",1890,8150,0,4370,0,14410],["03/05/2026",3180,0,16900,3116,0,23196],["03/06/2026",2680,1390,1890,1390,0,7350],["03/07/2026",21068,0,12730,8856,0,42654],["03/08/2026",29124.5,7850,15330,10340,0,62644.5],["03/09/2026",8154,6980,3280,8314,0,26728],["03/10/2026",15473,1790,14100,1990,0,33353],["03/11/2026",11506,0,4270,3480,0,19256],["03/12/2026",7673.5,2980,5170,7280,0,23103.5],["03/13/2026",7321,0,1490,0,0,8811],["03/14/2026",13948,0,38090,31689.5,0,83727.5],["03/15/2026",14085.5,0,3580,1890,0,19555.5],["03/16/2026",1490,0,3280,5836,0,10606],["03/17/2026",1490,1490,14520,0,0,17500],["03/18/2026",3580,0,10740,4221,0,18541],["03/19/2026",9581,1490,11150,0,0,22221],["03/20/2026",4470,4870,9770,0,0,19110],["03/21/2026",14317,3380,9940,3490.5,0,31127.5],["03/22/2026",9091,12230,15430,13682,0,50433],["03/23/2026",7391,1990,12450,5890,0,27721],["03/24/2026",10394,0,14140,7622,0,32156],["03/25/2026",6960,0,8940,6183,0,22083],["03/26/2026",10134,1490,7460,9382,0,28466],["03/27/2026",13782,5070,22690,4270,0,45812],["03/28/2026",28897,8630,17500,11028.5,0,66055.5],["03/29/2026",40940,5570,45940,8976,0,101426],["03/30/2026",6871,4860,12140,1890,0,25761],["03/31/2026",11269,7550,8650,7831,0,35300],["04/01/2026",17919,0,24950,1390,6416,50675],["04/02/2026",2831,0,10260,0,8482,21573],["04/03/2026",8560,0,11620,8279,13793.5,42252.5],["04/04/2026",12663,1990,23050,17750,9599,65052],["04/05/2026",27509,0,41960,0,8102,77571],["04/06/2026",17447,2980,11520,4080,3290,39317],["04/07/2026",17779,0,4770,0,11251,33800],["04/08/2026",3890,0,10450,9443,8821,32604],["04/09/2026",9591,0,2190,0,12821,24602],["04/10/2026",7931,0,13740,5621,0,27292],["04/11/2026",22772,0,17000,3686,4321,47779],["04/12/2026",9361,3876,8050,0,9052,30339],["04/13/2026",10282,0,24290,0,4541,39113],["04/14/2026",13860,6660,19690,8582,2641,51433],["04/15/2026",9791,1390,2780,4221,15532,33714],["04/16/2026",5513,0,12920,7362,15763,41558],["04/17/2026",11279,2980,17390,2390,6363,40402],["04/18/2026",5662,5829,9950,14009,17490,52940],["04/19/2026",17134,0,31940,2880,23730,75684],["04/20/2026",14415,10272,14010,0,12762,51459],["04/21/2026",5686,3591,7760,12943.5,6076,36056.5],["04/22/2026",0,0,10160,10228.5,7319,27707.5],["04/23/2026",12242,0,9250,0,10621,32113],["04/24/2026",5960,0,31130,1890,4480,43460],["04/25/2026",12449,3211,18510,5413,4203,43786],["04/26/2026",12114,0,17500,4180,19691.5,53485.5],["04/27/2026",18213,0,10350,5270,1390,35223],["04/28/2026",12135,0,39590,0,7509,59234],["04/29/2026",9717,0,8670,2390,2641,23418],["04/30/2026",1990,0,31820,1490,11920,47220],["05/01/2026",30492,3116,20190,19348.5,16203,89349.5],["05/02/2026",13289,0,38770,12176,13930.5,78165.5],["05/03/2026",25587.5,0,24740,3299,12288,65914.5],["05/04/2026",5947,6596,14300,11154,5021,43018],["05/05/2026",6311,6766,16590,6519,12936,49122],["05/06/2026",8512,0,16210,2390,0,27112],["05/07/2026",13103,1490,0,7721,0,22314],["05/08/2026",5151,0,14340,5370,13369,38230],["05/09/2026",7701,0,8160,3401,13587,32849],["05/10/2026",15417,3280,63350,26252,6570,114869],["05/11/2026",18392,2880,4270,7769,1490,34801],["05/12/2026",7752,0,7160,0,1490,16402],["05/13/2026",11761.5,1790,2780,4951,5696,26978.5],["05/14/2026",4886,7301,4170,2831,5291,24479],["05/15/2026",2831,1390,4970,0,11746,20937],["05/16/2026",14838,3980,4470,10583,21120,54991],["05/17/2026",14397,4321,16980,5570,14519,55787],["05/18/2026",6441,0,10330,0,0,16771],["05/19/2026",0,1790,0,2641,2880,7311],["05/20/2026",27280.5,0,0,6871,0,34151.5],["05/21/2026",11927,3211,0,5280,0,20418],["05/22/2026",7817,2980,0,15394,690,26881],["05/23/2026",18114,0,0,12315,4563,34992],["05/24/2026",13235,8101,0,8070,11282,40688],["05/25/2026",6802,0,0,0,6731,13533],["05/26/2026",14675,4796,0,2680,3880,26031],["05/27/2026",19194,1390,0,12992,9999,43575],["05/28/2026",12507,4321,0,0,0,16828],["05/29/2026",13883.5,0,0,7713,5411,27007.5],["05/30/2026",10203,1490,0,14062,12815,38570],["05/31/2026",5103,4701,0,28469.5,12542,50815.5],["06/01/2026",13801.5,0,0,19227.5,0,33029.0],["06/02/2026",11101.5,4212,0,4928,16954,37195.5],["06/03/2026",6271,3380,16220,3580,5724,35175],["06/04/2026",6706.5,0,10840,9730,5032,32308.5],["06/05/2026",10580,2490,11340,0,3872,28282],["06/06/2026",5532,5892,28050,11420,6788,57682],["06/07/2026",12988,1690,33720,17553,11078.5,77029.5],["06/08/2026",2880,0,2680,2980,0,8540],["06/09/2026",18295,0,1790,0,12620,32705],["06/10/2026",15072,0,23970,0,7164,46206],["06/11/2026",12024,3880,0,4649.5,11950.5,32504.0],["06/12/2026",6534,3180,10540,3402,0,23656],["06/13/2026",3492,0,77500,12818,10861.5,104671.5],["06/14/2026",4212,2190,61570,9048,10150,87170],["06/15/2026",8762,0,14730,0,0,23492],["06/16/2026",7524,0,20000,7400,2490,37414],["06/17/2026",3480,2490,15710,3132,9578,34390],["06/18/2026",0,3312,8450,2980,2682,17424],["06/19/2026",0,1490,17080,2390,3591,24551],["06/20/2026",6602,5470,33520,28637,4180,78409],["06/21/2026",33712.5,3312,22080,20132,3980,83216.5],["06/22/2026",1690,0,35700,3289.5,5888,46567.5],["06/23/2026",0,3322,41560,0,0,44882],["06/24/2026",4380,1690,9140,13892,3970,33072],["06/25/2026",5632,4372,21780,0,0,31784],["06/26/2026",5670,0,28850,14541.5,9642,58703.5],["06/27/2026",16686,0,22790,9720,19494.5,68690.5],["06/28/2026",39527,0,18100,22286,11534,91447],["06/29/2026",0,1690,1890,5980.5,5074.5,14635.0],["06/30/2026",5770,7991.5,13920,22997.5,15046,65725.0],["07/01/2026",6804,0,47360,18216,6048,78428],["07/02/2026",4482,0,11050,3582,10672,29786],["07/03/2026",1690,2190,25080,0,4482,33442],["07/04/2026",12392,3942,18800,1490,1490,38114],["07/05/2026",15908.5,1690,58970,28637.5,13479,118685.0],["07/06/2026",12812,3042,8260,2190,4392,30696],["07/07/2026",3402,0,21000,3480,2490,30372],["07/08/2026",11186,9374,25960,6242,1490,54252],["07/09/2026",6984,3492,6370,7930,5662,30438],["07/10/2026",6672,1490,45599,6812,3132,63705],["07/11/2026",27455,2190,3880,1690,11574,46789],["07/12/2026",6860,3880,25080,10602,9258,55680],["07/13/2026",12380,3480,6080,3042,0,24982],["07/14/2026",8850,3380,11240,25197.5,0,48667.5],["07/15/2026",8352,1690,3380,4482,16034,33938],["07/16/2026",7122,0,11730,3680,6984,29516],["07/17/2026",10774,0,10640,0,12744.5,34158.5],["07/18/2026",23499.5,6289.5,22780,13536,0,66105.0],["07/19/2026",7144,4180,27850,2490,3762,45426],["07/20/2026",4670,0,24790,3990,5612,39062],["07/21/2026",9500,0,9550,10280,1990,31320],["07/22/2026",4392,3942,37110,6349.5,3402,55195.5],["07/23/2026",6882,3380,20190,0,1690,32142],["07/24/2026",6272,2390,31050,11704,12822,64238],["07/25/2026",8954.5,3480,0,18539.5,7614.5,38588.5],["07/26/2026",8244,4870,8260,13144,12670,47188]],"bestseller":{"months":["2025-06","2025-07","2025-08","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],"all_store_alltime":[{"product":"HudsonDarkBrown","qty":132,"top_size":"32"},{"product":"WindsorWhite","qty":121,"top_size":"M"},{"product":"HudsonNavy","qty":121,"top_size":"34"},{"product":"HudsonBeige","qty":118,"top_size":"34"},{"product":"MarinerCream","qty":116,"top_size":"32"}],"all_store_by_month":{"2025-06":[{"product":"HavanaBlueStripe","qty":2,"top_size":"XL"},{"product":"HavanaNavyYellowStripe","qty":1,"top_size":"XL"},{"product":"RowdenJeans","qty":1,"top_size":"32"},{"product":"RowdenWhite","qty":1,"top_size":"32"},{"product":"WindsorNavystripe","qty":1,"top_size":"L"}],"2025-07":[{"product":"PortlandBeige","qty":4,"top_size":"32"},{"product":"PortlandWhite","qty":3,"top_size":"32"},{"product":"WellingtonBlack","qty":3,"top_size":"32"},{"product":"DaltonDenim","qty":3,"top_size":"M"},{"product":"NormadWhite","qty":2,"top_size":"L"}],"2025-08":[{"product":"WellingtonFrenchNavy","qty":5,"top_size":"34"},{"product":"BondBrown","qty":4,"top_size":"M"},{"product":"NormadWhite","qty":3,"top_size":"M"},{"product":"BondNavy","qty":3,"top_size":"L"},{"product":"DaltonDenim","qty":3,"top_size":"XL"}],"2025-11":[{"product":"GlenfieldGreen","qty":4,"top_size":"M"},{"product":"BandanaDerbyGrey","qty":4,"top_size":"N/A"},{"product":"HudsonOnyxblack","qty":3,"top_size":"38"},{"product":"BedfordBrown","qty":3,"top_size":"M"},{"product":"HudsonNavy","qty":3,"top_size":"34"}],"2025-12":[{"product":"BondBrown","qty":21,"top_size":"L"},{"product":"BondNavy","qty":18,"top_size":"M"},{"product":"HudsonDarkBrown","qty":16,"top_size":"34"},{"product":"HerringboneBrown","qty":16,"top_size":"M"},{"product":"HudsonBeige","qty":16,"top_size":"34"}],"2026-01":[{"product":"BondBrown","qty":26,"top_size":"M"},{"product":"WellingtonCharcoalgrey","qty":19,"top_size":"32"},{"product":"WellingtonBlack","qty":17,"top_size":"34"},{"product":"ParkerWhite","qty":17,"top_size":"L"},{"product":"HudsonNavy","qty":17,"top_size":"34"}],"2026-02":[{"product":"HudsonNavy","qty":25,"top_size":"32"},{"product":"HudsonBeige","qty":20,"top_size":"32"},{"product":"HudsonDarkBrown","qty":17,"top_size":"32"},{"product":"BondBrown","qty":15,"top_size":"S"},{"product":"Finery Polo","qty":15,"top_size":"XL"}],"2026-03":[{"product":"HudsonWhiteGrey","qty":17,"top_size":"34"},{"product":"HudsonBeige","qty":15,"top_size":"34"},{"product":"WindsorWhite","qty":14,"top_size":"M"},{"product":"WellingtonCharcoalgrey","qty":14,"top_size":"34"},{"product":"PoloSpreadCollarNavy","qty":13,"top_size":"L"}],"2026-04":[{"product":"MarinerCream","qty":40,"top_size":"32"},{"product":"LinenShirtBrown","qty":26,"top_size":"M"},{"product":"MarinerNavy","qty":24,"top_size":"32"},{"product":"HudsonDarkBrown","qty":23,"top_size":"36"},{"product":"LinenShirtLightblue","qty":18,"top_size":"S"}],"2026-05":[{"product":"MarinerCream","qty":29,"top_size":"34"},{"product":"BondNavy","qty":19,"top_size":"S"},{"product":"LinenShirtOlivegreen","qty":18,"top_size":"M"},{"product":"HudsonBeige","qty":18,"top_size":"34"},{"product":"HudsonDarkBrown","qty":18,"top_size":"32"}],"2026-06":[{"product":"WindsorWhite","qty":22,"top_size":"M"},{"product":"MarinerCream","qty":21,"top_size":"32"},{"product":"LinenShirtLightblue","qty":18,"top_size":"M"},{"product":"HudsonNavy","qty":18,"top_size":"32"},{"product":"BondBlack","qty":18,"top_size":"S"}],"2026-07":[{"product":"MarinerWhite","qty":21,"top_size":"34"},{"product":"MarinerNavy","qty":20,"top_size":"34"},{"product":"The Hudson Trouser","qty":18,"top_size":"32"},{"product":"MarinerCream","qty":16,"top_size":"34"},{"product":"The Windsor Shirt","qty":16,"top_size":"L"}]},"branch_alltime":{"par":[{"product":"BondBrown","qty":64,"top_size":"L"},{"product":"BondBlack","qty":60,"top_size":"L"},{"product":"BondNavy","qty":56,"top_size":"M"},{"product":"HudsonDarkBrown","qty":54,"top_size":"32"},{"product":"BondOceanblue","qty":54,"top_size":"L"}],"cw":[{"product":"WindsorWhite","qty":26,"top_size":"M"},{"product":"HudsonNavy","qty":25,"top_size":"32"},{"product":"HudsonBeige","qty":25,"top_size":"30"},{"product":"HudsonDarkBrown","qty":24,"top_size":"32"},{"product":"Windsor Pita Blue Stripe","qty":24,"top_size":"M"}],"lad":[{"product":"HudsonNavy","qty":46,"top_size":"32"},{"product":"HudsonDarkBrown","qty":42,"top_size":"32"},{"product":"WindsorWhite","qty":36,"top_size":"S"},{"product":"HudsonBeige","qty":36,"top_size":"34"},{"product":"The Hudson Trouser","qty":31,"top_size":"34"}],"pin":[{"product":"HudsonAshgrey","qty":11,"top_size":"34"},{"product":"DaltonDenim","qty":9,"top_size":"XL"},{"product":"WellingtonBlack","qty":8,"top_size":"32"},{"product":"WellingtonFrenchNavy","qty":8,"top_size":"34"},{"product":"HudsonStormblue","qty":7,"top_size":"36"}],"emp":[{"product":"MarinerCream","qty":27,"top_size":"32"},{"product":"LinenShirtBrown","qty":19,"top_size":"M"},{"product":"LinenShirtOlivegreen","qty":16,"top_size":"M"},{"product":"BondBlack","qty":15,"top_size":"M"},{"product":"MarinerWhite","qty":15,"top_size":"36"}]},"branch_by_month":{"par":{"2025-06":[],"2025-07":[],"2025-08":[],"2025-11":[],"2025-12":[{"product":"BondBrown","qty":19,"top_size":"L"},{"product":"BondNavy","qty":14,"top_size":"M"},{"product":"BondLightGrey","qty":13,"top_size":"S"},{"product":"KyotoMilitarygreen","qty":13,"top_size":"32"},{"product":"HerringboneBrown","qty":12,"top_size":"M"}],"2026-01":[{"product":"BondBrown","qty":21,"top_size":"L"},{"product":"BondLightGrey","qty":12,"top_size":"L"},{"product":"WellingtonCharcoalgrey","qty":10,"top_size":"32"},{"product":"BondBlack","qty":10,"top_size":"L"},{"product":"BondOliveGreen","qty":9,"top_size":"L"}],"2026-02":[{"product":"Finery Polo","qty":15,"top_size":"XL"},{"product":"BondBrown","qty":9,"top_size":"S"},{"product":"BondOceanblue","qty":8,"top_size":"M"},{"product":"BondLightBrown","qty":8,"top_size":"M"},{"product":"HudsonBeige","qty":7,"top_size":"34"}],"2026-03":[{"product":"HudsonBeige","qty":9,"top_size":"34"},{"product":"HudsonWhiteGrey","qty":8,"top_size":"34"},{"product":"MarinerCream","qty":7,"top_size":"32"},{"product":"MerinoSweaterCream","qty":6,"top_size":"M"},{"product":"WellingtonBrown","qty":6,"top_size":"36"}],"2026-04":[{"product":"MarinerCream","qty":14,"top_size":"30"},{"product":"MarinerNavy","qty":11,"top_size":"32"},{"product":"LinenShirtBrown","qty":11,"top_size":"M"},{"product":"BondOliveGreen","qty":9,"top_size":"M"},{"product":"BondBlack","qty":8,"top_size":"L"}],"2026-05":[{"product":"BondNavy","qty":7,"top_size":"L"},{"product":"BondOliveGreen","qty":6,"top_size":"M"},{"product":"SummerShortBeige","qty":6,"top_size":"L"},{"product":"SummerShortNavy","qty":6,"top_size":"M"},{"product":"SummerShortWhite","qty":5,"top_size":"S"}],"2026-06":[{"product":"MarinerCream","qty":13,"top_size":"32"},{"product":"BondBlack","qty":13,"top_size":"S"},{"product":"MarinerNavy","qty":11,"top_size":"30"},{"product":"BondOceanblue","qty":10,"top_size":"L"},{"product":"HudsonDarkBrown","qty":10,"top_size":"32"}],"2026-07":[{"product":"MarinerWhite","qty":11,"top_size":"34"},{"product":"HudsonNavy","qty":9,"top_size":"34"},{"product":"MarinerNavy","qty":9,"top_size":"32"},{"product":"KyotoWhite","qty":9,"top_size":"34"},{"product":"HudsonDarkBrown","qty":9,"top_size":"34"}]},"cw":{"2025-06":[],"2025-07":[],"2025-08":[],"2025-11":[{"product":"GlenfieldGreen","qty":4,"top_size":"M"},{"product":"BandanaDerbyGrey","qty":4,"top_size":"N/A"},{"product":"HudsonOnyxblack","qty":3,"top_size":"38"},{"product":"BedfordBrown","qty":3,"top_size":"M"},{"product":"HudsonNavy","qty":3,"top_size":"34"}],"2025-12":[{"product":"BedfordBrown","qty":6,"top_size":"L"},{"product":"RivieraOliveGreen","qty":5,"top_size":"S"},{"product":"HudsonDarkBrown","qty":5,"top_size":"34"},{"product":"BondNavy","qty":4,"top_size":"S"},{"product":"HerringboneBrown","qty":4,"top_size":"S"}],"2026-01":[{"product":"MasonBlueStripe","qty":7,"top_size":"L"},{"product":"BandanaDiamond Brown","qty":6,"top_size":"N/A"},{"product":"Polo - Navy - Dachshund","qty":5,"top_size":"XL"},{"product":"WindsorWhite","qty":5,"top_size":"S"},{"product":"Windsor Pita Blue Stripe","qty":5,"top_size":"XL"}],"2026-02":[{"product":"HudsonDarkBrown","qty":5,"top_size":"36"},{"product":"HudsonBeige","qty":4,"top_size":"32"},{"product":"WindsorWhite","qty":4,"top_size":"S"},{"product":"HudsonNavy","qty":4,"top_size":"32"},{"product":"DaltonLightDenim","qty":4,"top_size":"S"}],"2026-03":[{"product":"KyotoWhite","qty":6,"top_size":"32"},{"product":"PoloSpreadCollarWhiteCream","qty":6,"top_size":"L"},{"product":"KyotoBrown","qty":5,"top_size":"32"},{"product":"WellingtonCharcoalgrey","qty":4,"top_size":"34"},{"product":"PoloSpreadCollarOliveGreen","qty":4,"top_size":"L"}],"2026-04":[{"product":"MarinerCream","qty":4,"top_size":"32"},{"product":"LinenShirtLightblue","qty":4,"top_size":"L"},{"product":"BondLightBrown","qty":4,"top_size":"L"},{"product":"KyotoWhite","qty":3,"top_size":"34"},{"product":"ParkerNavystripe","qty":3,"top_size":"M"}],"2026-05":[{"product":"BondNavy","qty":7,"top_size":"M"},{"product":"PoloSpreadCollarWhiteCream","qty":6,"top_size":"XL"},{"product":"MarinerCream","qty":6,"top_size":"32"},{"product":"HudsonBeige","qty":5,"top_size":"36"},{"product":"Oxford100%LightBlue","qty":4,"top_size":"M"}],"2026-06":[{"product":"QuarterZipNavy","qty":5,"top_size":"S"},{"product":"BondOceanblue","qty":5,"top_size":"S"},{"product":"BondNavy","qty":5,"top_size":"L"},{"product":"MarinerWhite","qty":5,"top_size":"36"},{"product":"WellingtonCharcoalgrey","qty":5,"top_size":"34"}],"2026-07":[{"product":"LinenShirtWhite","qty":5,"top_size":"L"},{"product":"WellingtonBrown","qty":5,"top_size":"30"},{"product":"MarinerWhite","qty":5,"top_size":"32"},{"product":"LinenShirNavy","qty":4,"top_size":"S"},{"product":"BondLightBrown","qty":4,"top_size":"M"}]},"lad":{"2025-06":[],"2025-07":[],"2025-08":[],"2025-11":[],"2025-12":[],"2026-01":[{"product":"KyotoWhite","qty":10,"top_size":"36"},{"product":"HudsonDarkBrown","qty":10,"top_size":"32"},{"product":"WellingtonBlack","qty":9,"top_size":"30"},{"product":"HudsonNavy","qty":9,"top_size":"30"},{"product":"WindsorWhite","qty":9,"top_size":"S"}],"2026-02":[{"product":"HudsonNavy","qty":15,"top_size":"32"},{"product":"HudsonOnyxblack","qty":11,"top_size":"32"},{"product":"HudsonBeige","qty":9,"top_size":"34"},{"product":"GlenfieldGreen","qty":6,"top_size":"L"},{"product":"WellingtonBlack","qty":6,"top_size":"30"}],"2026-03":[{"product":"ParkerWhite","qty":8,"top_size":"M"},{"product":"WellingtonCharcoalgrey","qty":7,"top_size":"30"},{"product":"PoloSpreadCollarGrey","qty":7,"top_size":"L"},{"product":"HudsonNavy","qty":7,"top_size":"36"},{"product":"HudsonWhiteGrey","qty":7,"top_size":"36"}],"2026-04":[{"product":"HudsonBeige","qty":10,"top_size":"32"},{"product":"HudsonDarkBrown","qty":9,"top_size":"38"},{"product":"MarinerCream","qty":9,"top_size":"32"},{"product":"HudsonWhiteGrey","qty":8,"top_size":"36"},{"product":"HudsonAshgrey","qty":8,"top_size":"34"}],"2026-05":[{"product":"HudsonDarkBrown","qty":11,"top_size":"36"},{"product":"MarinerCream","qty":10,"top_size":"34"},{"product":"MarinerNavy","qty":8,"top_size":"32"},{"product":"BondBlack","qty":8,"top_size":"L"},{"product":"HudsonBeige","qty":7,"top_size":"34"}],"2026-06":[{"product":"The Parker Shirt","qty":16,"top_size":"S"},{"product":"The Kyoto Trouser","qty":14,"top_size":"30"},{"product":"The Hudson Trouser","qty":13,"top_size":"34"},{"product":"The Windsor Shirt","qty":13,"top_size":"XL"},{"product":"The Wellington Trouser","qty":13,"top_size":"32"}],"2026-07":[{"product":"The Hudson Trouser","qty":18,"top_size":"32"},{"product":"The Windsor Shirt","qty":16,"top_size":"L"},{"product":"The Hudson Trouser - Classic Fit","qty":15,"top_size":"34"},{"product":"The Parker Shirt","qty":13,"top_size":"M"},{"product":"The Wellington Trouser","qty":12,"top_size":"36"}]},"pin":{"2025-06":[{"product":"HavanaBlueStripe","qty":2,"top_size":"XL"},{"product":"HavanaNavyYellowStripe","qty":1,"top_size":"XL"},{"product":"RowdenJeans","qty":1,"top_size":"32"},{"product":"RowdenWhite","qty":1,"top_size":"32"},{"product":"WindsorNavystripe","qty":1,"top_size":"L"}],"2025-07":[{"product":"PortlandBeige","qty":4,"top_size":"32"},{"product":"PortlandWhite","qty":3,"top_size":"32"},{"product":"WellingtonBlack","qty":3,"top_size":"32"},{"product":"DaltonDenim","qty":3,"top_size":"M"},{"product":"NormadWhite","qty":2,"top_size":"L"}],"2025-08":[{"product":"WellingtonFrenchNavy","qty":5,"top_size":"34"},{"product":"BondBrown","qty":4,"top_size":"M"},{"product":"NormadWhite","qty":3,"top_size":"M"},{"product":"BondNavy","qty":3,"top_size":"L"},{"product":"DaltonDenim","qty":3,"top_size":"XL"}],"2025-11":[],"2025-12":[],"2026-01":[],"2026-02":[],"2026-03":[],"2026-04":[{"product":"MarinerWhite","qty":2,"top_size":"38"},{"product":"HudsonDarkBrown","qty":2,"top_size":"34"},{"product":"WellingtonSand","qty":1,"top_size":"38"},{"product":"FineryPoloNavy","qty":1,"top_size":"XL"},{"product":"WellingtonBrown","qty":1,"top_size":"34"}],"2026-05":[{"product":"WellingtonBlack","qty":3,"top_size":"32"},{"product":"WellingtonLightgrey","qty":3,"top_size":"34"},{"product":"HudsonOnyxblack","qty":3,"top_size":"34"},{"product":"HudsonStormblue","qty":3,"top_size":"36"},{"product":"ParkerNavystripe","qty":2,"top_size":"M"}],"2026-06":[{"product":"HudsonAshgrey","qty":4,"top_size":"36"},{"product":"PoloSpreadCollarNavy","qty":3,"top_size":"XL"},{"product":"LinenShirtLightblue","qty":2,"top_size":"L"},{"product":"ParkerBrownstripe","qty":2,"top_size":"M"},{"product":"MarinerCream","qty":1,"top_size":"34"}],"2026-07":[{"product":"DaltonLightDenim","qty":2,"top_size":"L"},{"product":"BondLightGrey","qty":2,"top_size":"M"},{"product":"LinenShirtLightblue","qty":2,"top_size":"M"},{"product":"BedfordBrown","qty":2,"top_size":"XL"},{"product":"HudsonAshgrey","qty":2,"top_size":"34"}]},"emp":{"2025-06":[],"2025-07":[],"2025-08":[],"2025-11":[],"2025-12":[],"2026-01":[],"2026-02":[],"2026-03":[],"2026-04":[{"product":"MarinerCream","qty":12,"top_size":"36"},{"product":"LinenShirtBrown","qty":9,"top_size":"M"},{"product":"BondBlack","qty":6,"top_size":"M"},{"product":"MarinerWhite","qty":6,"top_size":"36"},{"product":"LinenShirNavy","qty":6,"top_size":"S"}],"2026-05":[{"product":"MarinerCream","qty":7,"top_size":"32"},{"product":"LinenShirtOlivegreen","qty":5,"top_size":"M"},{"product":"HudsonBeige","qty":5,"top_size":"34"},{"product":"AldenWhite","qty":5,"top_size":"38"},{"product":"LinenShirtWhite","qty":4,"top_size":"M"}],"2026-06":[{"product":"WindsorWhite","qty":6,"top_size":"M"},{"product":"WellingtonCharcoalgrey","qty":5,"top_size":"34"},{"product":"LinenShirtWhite","qty":5,"top_size":"L"},{"product":"HudsonWhiteGrey","qty":4,"top_size":"36"},{"product":"PoloSpreadCollarNavy","qty":4,"top_size":"S"}],"2026-07":[{"product":"MarinerNavy","qty":6,"top_size":"34"},{"product":"MarinerCream","qty":5,"top_size":"34"},{"product":"LinenShirtBrown","qty":5,"top_size":"L"},{"product":"BondBlack","qty":5,"top_size":"M"},{"product":"WellingtonFrenchNavy","qty":4,"top_size":"36"}]}}},"bills":{"par":{"name":"Siam Paragon","bills_alltime":1034,"rev_alltime":3885789,"avg_alltime":3758.02,"bills_jul":119,"rev_jul":522059,"avg_jul":4387.05},"cw":{"name":"CTW","bills_alltime":542,"rev_alltime":1654527.0,"avg_alltime":3052.63,"bills_jul":63,"rev_jul":207306.0,"avg_jul":3290.57},"lad":{"name":"Central Ladprao","bills_alltime":817,"rev_alltime":2333506.5,"avg_alltime":2856.19,"bills_jul":83,"rev_jul":243683.5,"avg_jul":2935.95},"pin":{"name":"Pinklao","bills_alltime":0,"rev_alltime":0,"avg_alltime":0,"bills_jul":0,"rev_jul":0,"avg_jul":0},"emp":{"name":"Emporium","bills_alltime":318,"rev_alltime":852868.0,"avg_alltime":2681.97,"bills_jul":52,"rev_jul":159494.0,"avg_jul":3067.19}},"targets":{"jul":{"par":450000,"lad":370000,"emp":250000,"pin":120000,"cw":240000,"total":1430000}},"sellers":{"months":["2025-06","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],"ALL":{"par":[{"name":"Oat","rev":2100720.0,"bills":600,"days":126,"avg_bill":3501.2,"rev_day":16672.38,"index":111.1,"share":39.8},{"name":"Ploy","rev":903469.0,"bills":200,"days":40,"avg_bill":4517.35,"rev_day":22586.72,"index":150.5,"share":17.1},{"name":"Aom","rev":817890.0,"bills":242,"days":49,"avg_bill":3379.71,"rev_day":16691.63,"index":111.2,"share":15.5},{"name":"Friend","rev":630420.0,"bills":154,"days":26,"avg_bill":4093.64,"rev_day":24246.92,"index":161.6,"share":11.9},{"name":"Non","rev":123270.0,"bills":35,"days":8,"avg_bill":3522.0,"rev_day":15408.75,"index":102.7,"share":2.3},{"name":"Four","rev":117670.0,"bills":28,"days":4,"avg_bill":4202.5,"rev_day":29417.5,"index":196.1,"share":2.2},{"name":"Ota","rev":100310.0,"bills":23,"days":5,"avg_bill":4361.3,"rev_day":20062.0,"index":133.7,"share":1.9},{"name":"Ice","rev":88700.0,"bills":25,"days":4,"avg_bill":3548.0,"rev_day":22175.0,"index":147.8,"share":1.7},{"name":"sooya","rev":71910.0,"bills":22,"days":5,"avg_bill":3268.64,"rev_day":14382.0,"index":95.9,"share":1.4},{"name":"Name","rev":52960.0,"bills":14,"days":4,"avg_bill":3782.86,"rev_day":13240.0,"index":88.2,"share":1.0},{"name":"Gust","rev":48600.0,"bills":12,"days":5,"avg_bill":4050.0,"rev_day":9720.0,"index":64.8,"share":0.9},{"name":"Foon","rev":37500.0,"bills":9,"days":3,"avg_bill":4166.67,"rev_day":12500.0,"index":83.3,"share":0.7},{"name":"sooya(แทน)","rev":37170.0,"bills":13,"days":3,"avg_bill":2859.23,"rev_day":12390.0,"index":82.6,"share":0.7},{"name":"แทน","rev":33300.0,"bills":13,"days":3,"avg_bill":2561.54,"rev_day":11100.0,"index":74.0,"share":0.6},{"name":"Partime","rev":32730.0,"bills":7,"days":2,"avg_bill":4675.71,"rev_day":16365.0,"index":109.1,"share":0.6},{"name":"Fa (แทน)","rev":24950.0,"bills":4,"days":1,"avg_bill":6237.5,"rev_day":24950.0,"index":166.3,"share":0.5},{"name":"Sran","rev":14300.0,"bills":5,"days":1,"avg_bill":2860.0,"rev_day":14300.0,"index":95.3,"share":0.3},{"name":"sarun","rev":12640.0,"bills":3,"days":2,"avg_bill":4213.33,"rev_day":6320.0,"index":42.1,"share":0.2},{"name":"Sam","rev":11240.0,"bills":2,"days":1,"avg_bill":5620.0,"rev_day":11240.0,"index":74.9,"share":0.2},{"name":"nureeya","rev":10260.0,"bills":3,"days":1,"avg_bill":3420.0,"rev_day":10260.0,"index":68.4,"share":0.2},{"name":"Suya","rev":4170.0,"bills":2,"days":1,"avg_bill":2085.0,"rev_day":4170.0,"index":27.8,"share":0.1},{"name":"Firend","rev":1890.0,"bills":1,"days":1,"avg_bill":1890.0,"rev_day":1890.0,"index":12.6,"share":0.0}],"lad":[{"name":"Ota","rev":779495.0,"bills":258,"days":60,"avg_bill":3021.3,"rev_day":12991.58,"index":111.5,"share":21.2},{"name":"Non","rev":660824.5,"bills":242,"days":58,"avg_bill":2730.68,"rev_day":11393.53,"index":97.8,"share":18.0},{"name":"Gust","rev":459386.74,"bills":178,"days":42,"avg_bill":2580.82,"rev_day":10937.78,"index":93.9,"share":12.5},{"name":"Aom","rev":426158.0,"bills":146,"days":31,"avg_bill":2918.89,"rev_day":13747.03,"index":118.0,"share":11.6},{"name":"Four","rev":292998.0,"bills":100,"days":23,"avg_bill":2929.98,"rev_day":12739.04,"index":109.3,"share":8.0},{"name":"Korn","rev":196822.0,"bills":66,"days":11,"avg_bill":2982.15,"rev_day":17892.91,"index":153.6,"share":5.3},{"name":"Chom","rev":163485.5,"bills":58,"days":22,"avg_bill":2818.72,"rev_day":7431.16,"index":63.8,"share":4.4},{"name":"Sam","rev":113131.0,"bills":39,"days":13,"avg_bill":2900.79,"rev_day":8702.38,"index":74.7,"share":3.1},{"name":"Earth","rev":85572.5,"bills":25,"days":6,"avg_bill":3422.9,"rev_day":14262.08,"index":122.4,"share":2.3},{"name":"Book","rev":78054.5,"bills":32,"days":9,"avg_bill":2439.2,"rev_day":8672.72,"index":74.4,"share":2.1},{"name":"Friend","rev":63354.5,"bills":20,"days":5,"avg_bill":3167.73,"rev_day":12670.9,"index":108.7,"share":1.7},{"name":"Frien","rev":39598.0,"bills":12,"days":3,"avg_bill":3299.83,"rev_day":13199.33,"index":113.3,"share":1.1},{"name":"Name","rev":35627.0,"bills":15,"days":5,"avg_bill":2375.13,"rev_day":7125.4,"index":61.1,"share":1.0},{"name":"Ray","rev":34127.0,"bills":12,"days":2,"avg_bill":2843.92,"rev_day":17063.5,"index":146.4,"share":0.9},{"name":"Mos","rev":29940.0,"bills":11,"days":4,"avg_bill":2721.82,"rev_day":7485.0,"index":64.2,"share":0.8},{"name":"Oat","rev":27501.0,"bills":11,"days":2,"avg_bill":2500.09,"rev_day":13750.5,"index":118.0,"share":0.7},{"name":"Nut","rev":27280.5,"bills":6,"days":1,"avg_bill":4546.75,"rev_day":27280.5,"index":234.1,"share":0.7},{"name":"Jinny","rev":23499.5,"bills":6,"days":1,"avg_bill":3916.58,"rev_day":23499.5,"index":201.7,"share":0.6},{"name":"King","rev":23332.34,"bills":9,"days":3,"avg_bill":2592.48,"rev_day":7777.45,"index":66.7,"share":0.6},{"name":"Mumin","rev":19766.0,"bills":9,"days":2,"avg_bill":2196.22,"rev_day":9883.0,"index":84.8,"share":0.5},{"name":"Min","rev":18289.66,"bills":5,"days":1,"avg_bill":3657.93,"rev_day":18289.66,"index":157.0,"share":0.5},{"name":"Foon","rev":17292.0,"bills":5,"days":2,"avg_bill":3458.4,"rev_day":8646.0,"index":74.2,"share":0.5},{"name":"Wan","rev":17254.5,"bills":7,"days":2,"avg_bill":2464.93,"rev_day":8627.25,"index":74.0,"share":0.5},{"name":"Est","rev":15126.0,"bills":4,"days":2,"avg_bill":3781.5,"rev_day":7563.0,"index":64.9,"share":0.4},{"name":"foou","rev":12988.0,"bills":5,"days":1,"avg_bill":2597.6,"rev_day":12988.0,"index":111.5,"share":0.4},{"name":"Chompoo","rev":12977.5,"bills":4,"days":2,"avg_bill":3244.38,"rev_day":6488.75,"index":55.7,"share":0.4},{"name":"Ya","rev":3480.0,"bills":2,"days":1,"avg_bill":1740.0,"rev_day":3480.0,"index":29.9,"share":0.1},{"name":"AO แทน","rev":1690.0,"bills":1,"days":1,"avg_bill":1690.0,"rev_day":1690.0,"index":14.5,"share":0.0}],"cw":[{"name":"Gear","rev":908959.38,"bills":362,"days":139,"avg_bill":2510.94,"rev_day":6539.28,"index":87.3,"share":48.5},{"name":"Friend","rev":317683.0,"bills":93,"days":27,"avg_bill":3415.95,"rev_day":11766.04,"index":157.0,"share":17.0},{"name":"Cii","rev":168070.5,"bills":47,"days":17,"avg_bill":3575.97,"rev_day":9886.5,"index":131.9,"share":9.0},{"name":"Gust","rev":134103.2,"bills":43,"days":18,"avg_bill":3118.68,"rev_day":7450.18,"index":99.4,"share":7.2},{"name":"Aom","rev":97845.5,"bills":34,"days":13,"avg_bill":2877.81,"rev_day":7526.58,"index":100.4,"share":5.2},{"name":"Mos","rev":45736.5,"bills":12,"days":4,"avg_bill":3811.38,"rev_day":11434.13,"index":152.6,"share":2.4},{"name":"Ray","rev":41963.5,"bills":11,"days":3,"avg_bill":3814.86,"rev_day":13987.83,"index":186.7,"share":2.2},{"name":"Gear​","rev":31498.83,"bills":8,"days":5,"avg_bill":3937.35,"rev_day":6299.77,"index":84.1,"share":1.7},{"name":"Non","rev":24381.9,"bills":10,"days":4,"avg_bill":2438.19,"rev_day":6095.47,"index":81.3,"share":1.3},{"name":"Ta","rev":13395.0,"bills":4,"days":1,"avg_bill":3348.75,"rev_day":13395.0,"index":178.8,"share":0.7},{"name":"Dream","rev":13275.0,"bills":3,"days":1,"avg_bill":4425.0,"rev_day":13275.0,"index":177.2,"share":0.7},{"name":"Frien","rev":13144.0,"bills":3,"days":1,"avg_bill":4381.33,"rev_day":13144.0,"index":175.4,"share":0.7},{"name":"Ota","rev":12305.0,"bills":3,"days":1,"avg_bill":4101.67,"rev_day":12305.0,"index":164.2,"share":0.7},{"name":"Manrin","rev":11775.0,"bills":4,"days":1,"avg_bill":2943.75,"rev_day":11775.0,"index":157.1,"share":0.6},{"name":"Ananya","rev":8165.1,"bills":3,"days":2,"avg_bill":2721.7,"rev_day":4082.55,"index":54.5,"share":0.4},{"name":"ATT","rev":7511.05,"bills":12,"days":4,"avg_bill":625.92,"rev_day":1877.76,"index":25.1,"share":0.4},{"name":"Name","rev":7280.0,"bills":2,"days":1,"avg_bill":3640.0,"rev_day":7280.0,"index":97.2,"share":0.4},{"name":"Wan","rev":4816.0,"bills":2,"days":1,"avg_bill":2408.0,"rev_day":4816.0,"index":64.3,"share":0.3},{"name":"Mumin","rev":4391.0,"bills":3,"days":1,"avg_bill":1463.67,"rev_day":4391.0,"index":58.6,"share":0.2},{"name":"King","rev":4270.0,"bills":3,"days":2,"avg_bill":1423.33,"rev_day":2135.0,"index":28.5,"share":0.2},{"name":"Ice","rev":1490.0,"bills":1,"days":1,"avg_bill":1490.0,"rev_day":1490.0,"index":19.9,"share":0.1},{"name":"Friendlg","rev":1390.0,"bills":1,"days":1,"avg_bill":1390.0,"rev_day":1390.0,"index":18.6,"share":0.1},{"name":"Shay","rev":0.0,"bills":2,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0.0,"share":0.0}],"emp":[{"name":"Foon","rev":390983.17,"bills":160,"days":55,"avg_bill":2443.64,"rev_day":7108.78,"index":123.1,"share":38.4},{"name":"Mos","rev":237321.0,"bills":81,"days":38,"avg_bill":2929.89,"rev_day":6245.29,"index":108.2,"share":23.3},{"name":"Ice","rev":183725.64,"bills":66,"days":21,"avg_bill":2783.72,"rev_day":8748.84,"index":151.5,"share":18.1},{"name":"Friend","rev":102455.35,"bills":46,"days":17,"avg_bill":2227.29,"rev_day":6026.79,"index":104.4,"share":10.1},{"name":"Sran","rev":71829.81,"bills":26,"days":9,"avg_bill":2762.69,"rev_day":7981.09,"index":138.2,"share":7.1},{"name":"Mumin","rev":16203.0,"bills":4,"days":1,"avg_bill":4050.75,"rev_day":16203.0,"index":280.6,"share":1.6},{"name":"Palm","rev":6553.0,"bills":4,"days":2,"avg_bill":1638.25,"rev_day":3276.5,"index":56.7,"share":0.6},{"name":"Oat","rev":6416.0,"bills":3,"days":1,"avg_bill":2138.67,"rev_day":6416.0,"index":111.1,"share":0.6},{"name":"Ota","rev":1509.64,"bills":1,"days":1,"avg_bill":1509.64,"rev_day":1509.64,"index":26.1,"share":0.1},{"name":"Aom","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0.0,"share":0.0},{"name":"fah","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0.0,"share":0.0}],"pin":[{"name":"สร้อย","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0}]},"ALLBRANCH":[{"name":"Oat","rev":2134637.0,"bills":614,"days":129,"avg_bill":3476.61,"rev_day":16547.57,"n_branches":3,"branches":[{"bk":"par","rev":2100720.0},{"bk":"lad","rev":27501.0},{"bk":"emp","rev":6416.0}],"index":161.0,"share":18.0},{"name":"Aom","rev":1341893.5,"bills":423,"days":94,"avg_bill":3172.33,"rev_day":14275.46,"n_branches":4,"branches":[{"bk":"par","rev":817890.0},{"bk":"lad","rev":426158.0},{"bk":"cw","rev":97845.5},{"bk":"emp","rev":0.0}],"index":138.9,"share":11.3},{"name":"Friend","rev":1113912.85,"bills":313,"days":75,"avg_bill":3558.83,"rev_day":14852.17,"n_branches":4,"branches":[{"bk":"par","rev":630420.0},{"bk":"cw","rev":317683.0},{"bk":"emp","rev":102455.35},{"bk":"lad","rev":63354.5}],"index":144.5,"share":9.4},{"name":"Gear","rev":908959.38,"bills":362,"days":139,"avg_bill":2510.94,"rev_day":6539.28,"n_branches":1,"branches":[{"bk":"cw","rev":908959.38}],"index":63.6,"share":7.7},{"name":"Ploy","rev":903469.0,"bills":200,"days":40,"avg_bill":4517.35,"rev_day":22586.72,"n_branches":1,"branches":[{"bk":"par","rev":903469.0}],"index":219.8,"share":7.6},{"name":"Ota","rev":893619.64,"bills":285,"days":67,"avg_bill":3135.51,"rev_day":13337.61,"n_branches":4,"branches":[{"bk":"lad","rev":779495.0},{"bk":"par","rev":100310.0},{"bk":"cw","rev":12305.0},{"bk":"emp","rev":1509.64}],"index":129.8,"share":7.5},{"name":"Non","rev":808476.4,"bills":287,"days":70,"avg_bill":2816.99,"rev_day":11549.66,"n_branches":3,"branches":[{"bk":"lad","rev":660824.5},{"bk":"par","rev":123270.0},{"bk":"cw","rev":24381.9}],"index":112.4,"share":6.8},{"name":"Gust","rev":642089.95,"bills":233,"days":65,"avg_bill":2755.75,"rev_day":9878.31,"n_branches":3,"branches":[{"bk":"lad","rev":459386.74},{"bk":"cw","rev":134103.2},{"bk":"par","rev":48600.0}],"index":96.1,"share":5.4},{"name":"Foon","rev":445775.17,"bills":174,"days":59,"avg_bill":2561.93,"rev_day":7555.51,"n_branches":3,"branches":[{"bk":"emp","rev":390983.17},{"bk":"par","rev":37500.0},{"bk":"lad","rev":17292.0}],"index":73.5,"share":3.8},{"name":"Four","rev":410668.0,"bills":128,"days":27,"avg_bill":3208.34,"rev_day":15209.93,"n_branches":2,"branches":[{"bk":"lad","rev":292998.0},{"bk":"par","rev":117670.0}],"index":148.0,"share":3.5},{"name":"Mos","rev":312997.5,"bills":104,"days":46,"avg_bill":3009.59,"rev_day":6804.29,"n_branches":3,"branches":[{"bk":"emp","rev":237321.0},{"bk":"cw","rev":45736.5},{"bk":"lad","rev":29940.0}],"index":66.2,"share":2.6},{"name":"Ice","rev":273915.64,"bills":92,"days":26,"avg_bill":2977.34,"rev_day":10535.22,"n_branches":3,"branches":[{"bk":"emp","rev":183725.64},{"bk":"par","rev":88700.0},{"bk":"cw","rev":1490.0}],"index":102.5,"share":2.3},{"name":"Korn","rev":196822.0,"bills":66,"days":11,"avg_bill":2982.15,"rev_day":17892.91,"n_branches":1,"branches":[{"bk":"lad","rev":196822.0}],"index":174.1,"share":1.7},{"name":"Cii","rev":168070.5,"bills":47,"days":17,"avg_bill":3575.97,"rev_day":9886.5,"n_branches":1,"branches":[{"bk":"cw","rev":168070.5}],"index":96.2,"share":1.4},{"name":"Chom","rev":163485.5,"bills":58,"days":22,"avg_bill":2818.72,"rev_day":7431.16,"n_branches":1,"branches":[{"bk":"lad","rev":163485.5}],"index":72.3,"share":1.4},{"name":"Sam","rev":124371.0,"bills":41,"days":14,"avg_bill":3033.44,"rev_day":8883.64,"n_branches":2,"branches":[{"bk":"lad","rev":113131.0},{"bk":"par","rev":11240.0}],"index":86.4,"share":1.0},{"name":"Name","rev":95867.0,"bills":31,"days":10,"avg_bill":3092.48,"rev_day":9586.7,"n_branches":3,"branches":[{"bk":"par","rev":52960.0},{"bk":"lad","rev":35627.0},{"bk":"cw","rev":7280.0}],"index":93.3,"share":0.8},{"name":"Sran","rev":86129.81,"bills":31,"days":10,"avg_bill":2778.38,"rev_day":8612.98,"n_branches":2,"branches":[{"bk":"emp","rev":71829.81},{"bk":"par","rev":14300.0}],"index":83.8,"share":0.7},{"name":"Earth","rev":85572.5,"bills":25,"days":6,"avg_bill":3422.9,"rev_day":14262.08,"n_branches":1,"branches":[{"bk":"lad","rev":85572.5}],"index":138.8,"share":0.7},{"name":"Book","rev":78054.5,"bills":32,"days":9,"avg_bill":2439.2,"rev_day":8672.72,"n_branches":1,"branches":[{"bk":"lad","rev":78054.5}],"index":84.4,"share":0.7},{"name":"Ray","rev":76090.5,"bills":23,"days":5,"avg_bill":3308.28,"rev_day":15218.1,"n_branches":2,"branches":[{"bk":"cw","rev":41963.5},{"bk":"lad","rev":34127.0}],"index":148.1,"share":0.6},{"name":"sooya","rev":71910.0,"bills":22,"days":5,"avg_bill":3268.64,"rev_day":14382.0,"n_branches":1,"branches":[{"bk":"par","rev":71910.0}],"index":139.9,"share":0.6},{"name":"Frien","rev":52742.0,"bills":15,"days":4,"avg_bill":3516.13,"rev_day":13185.5,"n_branches":2,"branches":[{"bk":"lad","rev":39598.0},{"bk":"cw","rev":13144.0}],"index":128.3,"share":0.4},{"name":"Mumin","rev":40360.0,"bills":16,"days":4,"avg_bill":2522.5,"rev_day":10090.0,"n_branches":3,"branches":[{"bk":"lad","rev":19766.0},{"bk":"emp","rev":16203.0},{"bk":"cw","rev":4391.0}],"index":98.2,"share":0.3},{"name":"sooya(แทน)","rev":37170.0,"bills":13,"days":3,"avg_bill":2859.23,"rev_day":12390.0,"n_branches":1,"branches":[{"bk":"par","rev":37170.0}],"index":120.5,"share":0.3},{"name":"แทน","rev":33300.0,"bills":13,"days":3,"avg_bill":2561.54,"rev_day":11100.0,"n_branches":1,"branches":[{"bk":"par","rev":33300.0}],"index":108.0,"share":0.3},{"name":"Partime","rev":32730.0,"bills":7,"days":2,"avg_bill":4675.71,"rev_day":16365.0,"n_branches":1,"branches":[{"bk":"par","rev":32730.0}],"index":159.2,"share":0.3},{"name":"Gear​","rev":31498.83,"bills":8,"days":5,"avg_bill":3937.35,"rev_day":6299.77,"n_branches":1,"branches":[{"bk":"cw","rev":31498.83}],"index":61.3,"share":0.3},{"name":"King","rev":27602.34,"bills":12,"days":5,"avg_bill":2300.19,"rev_day":5520.47,"n_branches":2,"branches":[{"bk":"lad","rev":23332.34},{"bk":"cw","rev":4270.0}],"index":53.7,"share":0.2},{"name":"Nut","rev":27280.5,"bills":6,"days":1,"avg_bill":4546.75,"rev_day":27280.5,"n_branches":1,"branches":[{"bk":"lad","rev":27280.5}],"index":265.4,"share":0.2},{"name":"Fa (แทน)","rev":24950.0,"bills":4,"days":1,"avg_bill":6237.5,"rev_day":24950.0,"n_branches":1,"branches":[{"bk":"par","rev":24950.0}],"index":242.7,"share":0.2},{"name":"Jinny","rev":23499.5,"bills":6,"days":1,"avg_bill":3916.58,"rev_day":23499.5,"n_branches":1,"branches":[{"bk":"lad","rev":23499.5}],"index":228.6,"share":0.2},{"name":"Wan","rev":22070.5,"bills":9,"days":3,"avg_bill":2452.28,"rev_day":7356.83,"n_branches":2,"branches":[{"bk":"lad","rev":17254.5},{"bk":"cw","rev":4816.0}],"index":71.6,"share":0.2},{"name":"Min","rev":18289.66,"bills":5,"days":1,"avg_bill":3657.93,"rev_day":18289.66,"n_branches":1,"branches":[{"bk":"lad","rev":18289.66}],"index":177.9,"share":0.2},{"name":"Est","rev":15126.0,"bills":4,"days":2,"avg_bill":3781.5,"rev_day":7563.0,"n_branches":1,"branches":[{"bk":"lad","rev":15126.0}],"index":73.6,"share":0.1},{"name":"Ta","rev":13395.0,"bills":4,"days":1,"avg_bill":3348.75,"rev_day":13395.0,"n_branches":1,"branches":[{"bk":"cw","rev":13395.0}],"index":130.3,"share":0.1},{"name":"Dream","rev":13275.0,"bills":3,"days":1,"avg_bill":4425.0,"rev_day":13275.0,"n_branches":1,"branches":[{"bk":"cw","rev":13275.0}],"index":129.2,"share":0.1},{"name":"foou","rev":12988.0,"bills":5,"days":1,"avg_bill":2597.6,"rev_day":12988.0,"n_branches":1,"branches":[{"bk":"lad","rev":12988.0}],"index":126.4,"share":0.1},{"name":"Chompoo","rev":12977.5,"bills":4,"days":2,"avg_bill":3244.38,"rev_day":6488.75,"n_branches":1,"branches":[{"bk":"lad","rev":12977.5}],"index":63.1,"share":0.1},{"name":"sarun","rev":12640.0,"bills":3,"days":2,"avg_bill":4213.33,"rev_day":6320.0,"n_branches":1,"branches":[{"bk":"par","rev":12640.0}],"index":61.5,"share":0.1},{"name":"Manrin","rev":11775.0,"bills":4,"days":1,"avg_bill":2943.75,"rev_day":11775.0,"n_branches":1,"branches":[{"bk":"cw","rev":11775.0}],"index":114.6,"share":0.1},{"name":"nureeya","rev":10260.0,"bills":3,"days":1,"avg_bill":3420.0,"rev_day":10260.0,"n_branches":1,"branches":[{"bk":"par","rev":10260.0}],"index":99.8,"share":0.1},{"name":"Ananya","rev":8165.1,"bills":3,"days":2,"avg_bill":2721.7,"rev_day":4082.55,"n_branches":1,"branches":[{"bk":"cw","rev":8165.1}],"index":39.7,"share":0.1},{"name":"ATT","rev":7511.05,"bills":12,"days":4,"avg_bill":625.92,"rev_day":1877.76,"n_branches":1,"branches":[{"bk":"cw","rev":7511.05}],"index":18.3,"share":0.1},{"name":"Palm","rev":6553.0,"bills":4,"days":2,"avg_bill":1638.25,"rev_day":3276.5,"n_branches":1,"branches":[{"bk":"emp","rev":6553.0}],"index":31.9,"share":0.1},{"name":"Suya","rev":4170.0,"bills":2,"days":1,"avg_bill":2085.0,"rev_day":4170.0,"n_branches":1,"branches":[{"bk":"par","rev":4170.0}],"index":40.6,"share":0.0},{"name":"Ya","rev":3480.0,"bills":2,"days":1,"avg_bill":1740.0,"rev_day":3480.0,"n_branches":1,"branches":[{"bk":"lad","rev":3480.0}],"index":33.9,"share":0.0},{"name":"Firend","rev":1890.0,"bills":1,"days":1,"avg_bill":1890.0,"rev_day":1890.0,"n_branches":1,"branches":[{"bk":"par","rev":1890.0}],"index":18.4,"share":0.0},{"name":"AO แทน","rev":1690.0,"bills":1,"days":1,"avg_bill":1690.0,"rev_day":1690.0,"n_branches":1,"branches":[{"bk":"lad","rev":1690.0}],"index":16.4,"share":0.0},{"name":"Friendlg","rev":1390.0,"bills":1,"days":1,"avg_bill":1390.0,"rev_day":1390.0,"n_branches":1,"branches":[{"bk":"cw","rev":1390.0}],"index":13.5,"share":0.0},{"name":"Shay","rev":0.0,"bills":2,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"cw","rev":0.0}],"index":0.0,"share":0.0},{"name":"สร้อย","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"pin","rev":0.0}],"index":0.0,"share":0.0},{"name":"fah","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"emp","rev":0.0}],"index":0.0,"share":0.0}],"2025-06":{"par":[],"lad":[],"cw":[],"emp":[],"pin":[{"name":"สร้อย","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0}]},"2025-06_ALLBRANCH":[{"name":"สร้อย","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"pin","rev":0.0}],"index":0,"share":0}],"2025-11":{"par":[],"lad":[],"cw":[{"name":"Gear","rev":0.0,"bills":38,"days":10,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0},{"name":"Aom","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0},{"name":"ATT","rev":0.0,"bills":9,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0},{"name":"Shay","rev":0.0,"bills":2,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0,"share":0}],"emp":[],"pin":[]},"2025-11_ALLBRANCH":[{"name":"Aom","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"cw","rev":0.0}],"index":0,"share":0},{"name":"Gear","rev":0.0,"bills":38,"days":10,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"cw","rev":0.0}],"index":0,"share":0},{"name":"ATT","rev":0.0,"bills":9,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"cw","rev":0.0}],"index":0,"share":0},{"name":"Shay","rev":0.0,"bills":2,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"cw","rev":0.0}],"index":0,"share":0}],"2025-12":{"par":[{"name":"Oat","rev":527300.0,"bills":151,"days":25,"avg_bill":3492.05,"rev_day":21092.0,"index":87.2,"share":65.9},{"name":"Aom","rev":272580.0,"bills":76,"days":10,"avg_bill":3586.58,"rev_day":27258.0,"index":112.8,"share":34.1}],"lad":[],"cw":[{"name":"Gear","rev":188428.3,"bills":68,"days":23,"avg_bill":2771.0,"rev_day":8192.53,"index":98.8,"share":81.7},{"name":"Ta","rev":13395.0,"bills":4,"days":1,"avg_bill":3348.75,"rev_day":13395.0,"index":161.6,"share":5.8},{"name":"Dream","rev":13275.0,"bills":3,"days":1,"avg_bill":4425.0,"rev_day":13275.0,"index":160.1,"share":5.8},{"name":"Ananya","rev":8165.1,"bills":3,"days":2,"avg_bill":2721.7,"rev_day":4082.55,"index":49.2,"share":3.5},{"name":"ATT","rev":7511.05,"bills":3,"days":3,"avg_bill":2503.68,"rev_day":2503.68,"index":30.2,"share":3.3}],"emp":[],"pin":[]},"2025-12_ALLBRANCH":[{"name":"Oat","rev":527300.0,"bills":151,"days":25,"avg_bill":3492.05,"rev_day":21092.0,"n_branches":1,"branches":[{"bk":"par","rev":527300.0}],"index":164.4,"share":51.2},{"name":"Aom","rev":272580.0,"bills":76,"days":10,"avg_bill":3586.58,"rev_day":27258.0,"n_branches":1,"branches":[{"bk":"par","rev":272580.0}],"index":212.5,"share":26.4},{"name":"Gear","rev":188428.3,"bills":68,"days":23,"avg_bill":2771.0,"rev_day":8192.53,"n_branches":1,"branches":[{"bk":"cw","rev":188428.3}],"index":63.9,"share":18.3},{"name":"Ta","rev":13395.0,"bills":4,"days":1,"avg_bill":3348.75,"rev_day":13395.0,"n_branches":1,"branches":[{"bk":"cw","rev":13395.0}],"index":104.4,"share":1.3},{"name":"Dream","rev":13275.0,"bills":3,"days":1,"avg_bill":4425.0,"rev_day":13275.0,"n_branches":1,"branches":[{"bk":"cw","rev":13275.0}],"index":103.5,"share":1.3},{"name":"Ananya","rev":8165.1,"bills":3,"days":2,"avg_bill":2721.7,"rev_day":4082.55,"n_branches":1,"branches":[{"bk":"cw","rev":8165.1}],"index":31.8,"share":0.8},{"name":"ATT","rev":7511.05,"bills":3,"days":3,"avg_bill":2503.68,"rev_day":2503.68,"n_branches":1,"branches":[{"bk":"cw","rev":7511.05}],"index":19.5,"share":0.7}],"2026-01":{"par":[{"name":"Oat","rev":410060.0,"bills":132,"days":24,"avg_bill":3106.52,"rev_day":17085.83,"index":88.0,"share":61.3},{"name":"Aom","rev":141220.0,"bills":48,"days":9,"avg_bill":2942.08,"rev_day":15691.11,"index":80.8,"share":21.1},{"name":"Ota","rev":57460.0,"bills":13,"days":2,"avg_bill":4420.0,"rev_day":28730.0,"index":148.0,"share":8.6},{"name":"sooya(แทน)","rev":37170.0,"bills":13,"days":3,"avg_bill":2859.23,"rev_day":12390.0,"index":63.8,"share":5.6},{"name":"sooya","rev":23180.0,"bills":5,"days":1,"avg_bill":4636.0,"rev_day":23180.0,"index":119.4,"share":3.5}],"lad":[{"name":"Korn","rev":196822.0,"bills":66,"days":11,"avg_bill":2982.15,"rev_day":17892.91,"index":124.5,"share":33.4},{"name":"Gust","rev":151553.1,"bills":60,"days":13,"avg_bill":2525.88,"rev_day":11657.93,"index":81.1,"share":25.7},{"name":"Ota","rev":88216.0,"bills":28,"days":5,"avg_bill":3150.57,"rev_day":17643.2,"index":122.8,"share":15.0},{"name":"Earth","rev":85572.5,"bills":25,"days":6,"avg_bill":3422.9,"rev_day":14262.08,"index":99.3,"share":14.5},{"name":"Aom","rev":26088.0,"bills":12,"days":2,"avg_bill":2174.0,"rev_day":13044.0,"index":90.8,"share":4.4},{"name":"King","rev":23332.34,"bills":9,"days":3,"avg_bill":2592.48,"rev_day":7777.45,"index":54.1,"share":4.0},{"name":"Min","rev":18289.66,"bills":5,"days":1,"avg_bill":3657.93,"rev_day":18289.66,"index":127.3,"share":3.1}],"cw":[{"name":"Gear","rev":160096.0,"bills":62,"days":22,"avg_bill":2582.19,"rev_day":7277.09,"index":82.2,"share":70.4},{"name":"Gust","rev":35327.52,"bills":12,"days":5,"avg_bill":2943.96,"rev_day":7065.5,"index":79.8,"share":15.5},{"name":"Aom","rev":22988.0,"bills":8,"days":1,"avg_bill":2873.5,"rev_day":22988.0,"index":259.6,"share":10.1},{"name":"Wan","rev":4816.0,"bills":2,"days":1,"avg_bill":2408.0,"rev_day":4816.0,"index":54.4,"share":2.1},{"name":"King","rev":4270.0,"bills":3,"days":2,"avg_bill":1423.33,"rev_day":2135.0,"index":24.1,"share":1.9}],"emp":[],"pin":[]},"2026-01_ALLBRANCH":[{"name":"Oat","rev":410060.0,"bills":132,"days":24,"avg_bill":3106.52,"rev_day":17085.83,"n_branches":1,"branches":[{"bk":"par","rev":410060.0}],"index":122.2,"share":27.6},{"name":"Korn","rev":196822.0,"bills":66,"days":11,"avg_bill":2982.15,"rev_day":17892.91,"n_branches":1,"branches":[{"bk":"lad","rev":196822.0}],"index":128.0,"share":13.2},{"name":"Aom","rev":190296.0,"bills":68,"days":12,"avg_bill":2798.47,"rev_day":15858.0,"n_branches":3,"branches":[{"bk":"par","rev":141220.0},{"bk":"lad","rev":26088.0},{"bk":"cw","rev":22988.0}],"index":113.4,"share":12.8},{"name":"Gust","rev":186880.61,"bills":72,"days":18,"avg_bill":2595.56,"rev_day":10382.26,"n_branches":2,"branches":[{"bk":"lad","rev":151553.1},{"bk":"cw","rev":35327.52}],"index":74.3,"share":12.6},{"name":"Gear","rev":160096.0,"bills":62,"days":22,"avg_bill":2582.19,"rev_day":7277.09,"n_branches":1,"branches":[{"bk":"cw","rev":160096.0}],"index":52.1,"share":10.8},{"name":"Ota","rev":145676.0,"bills":41,"days":7,"avg_bill":3553.07,"rev_day":20810.86,"n_branches":2,"branches":[{"bk":"lad","rev":88216.0},{"bk":"par","rev":57460.0}],"index":148.9,"share":9.8},{"name":"Earth","rev":85572.5,"bills":25,"days":6,"avg_bill":3422.9,"rev_day":14262.08,"n_branches":1,"branches":[{"bk":"lad","rev":85572.5}],"index":102.0,"share":5.8},{"name":"sooya(แทน)","rev":37170.0,"bills":13,"days":3,"avg_bill":2859.23,"rev_day":12390.0,"n_branches":1,"branches":[{"bk":"par","rev":37170.0}],"index":88.6,"share":2.5},{"name":"King","rev":27602.34,"bills":12,"days":5,"avg_bill":2300.19,"rev_day":5520.47,"n_branches":2,"branches":[{"bk":"lad","rev":23332.34},{"bk":"cw","rev":4270.0}],"index":39.5,"share":1.9},{"name":"sooya","rev":23180.0,"bills":5,"days":1,"avg_bill":4636.0,"rev_day":23180.0,"n_branches":1,"branches":[{"bk":"par","rev":23180.0}],"index":165.8,"share":1.6},{"name":"Min","rev":18289.66,"bills":5,"days":1,"avg_bill":3657.93,"rev_day":18289.66,"n_branches":1,"branches":[{"bk":"lad","rev":18289.66}],"index":130.8,"share":1.2},{"name":"Wan","rev":4816.0,"bills":2,"days":1,"avg_bill":2408.0,"rev_day":4816.0,"n_branches":1,"branches":[{"bk":"cw","rev":4816.0}],"index":34.4,"share":0.3}],"2026-02":{"par":[{"name":"Oat","rev":327440.0,"bills":87,"days":19,"avg_bill":3763.68,"rev_day":17233.68,"index":134.1,"share":55.8},{"name":"Non","rev":123270.0,"bills":35,"days":8,"avg_bill":3522.0,"rev_day":15408.75,"index":119.9,"share":21.0},{"name":"Aom","rev":93860.0,"bills":34,"days":9,"avg_bill":2760.59,"rev_day":10428.89,"index":81.2,"share":16.0},{"name":"sooya","rev":21170.0,"bills":8,"days":2,"avg_bill":2646.25,"rev_day":10585.0,"index":82.4,"share":3.6},{"name":"แทน","rev":21170.0,"bills":8,"days":2,"avg_bill":2646.25,"rev_day":10585.0,"index":82.4,"share":3.6}],"lad":[{"name":"Ota","rev":199529.0,"bills":74,"days":14,"avg_bill":2696.34,"rev_day":14252.07,"index":117.7,"share":44.4},{"name":"Non","rev":155677.5,"bills":64,"days":13,"avg_bill":2432.46,"rev_day":11975.19,"index":98.9,"share":34.7},{"name":"Gust","rev":79596.03,"bills":39,"days":10,"avg_bill":2040.92,"rev_day":7959.6,"index":65.8,"share":17.7},{"name":"Mumin","rev":14234.0,"bills":7,"days":1,"avg_bill":2033.43,"rev_day":14234.0,"index":117.6,"share":3.2}],"cw":[{"name":"Gear","rev":117499.32,"bills":46,"days":20,"avg_bill":2554.33,"rev_day":5874.97,"index":79.3,"share":68.8},{"name":"Gust","rev":21887.68,"bills":6,"days":3,"avg_bill":3647.95,"rev_day":7295.89,"index":98.4,"share":12.8},{"name":"Ota","rev":12305.0,"bills":3,"days":1,"avg_bill":4101.67,"rev_day":12305.0,"index":166.0,"share":7.2},{"name":"Manrin","rev":11775.0,"bills":4,"days":1,"avg_bill":2943.75,"rev_day":11775.0,"index":158.9,"share":6.9},{"name":"Mumin","rev":4391.0,"bills":3,"days":1,"avg_bill":1463.67,"rev_day":4391.0,"index":59.2,"share":2.6},{"name":"Gear​","rev":2831.0,"bills":1,"days":1,"avg_bill":2831.0,"rev_day":2831.0,"index":38.2,"share":1.7}],"emp":[],"pin":[]},"2026-02_ALLBRANCH":[{"name":"Oat","rev":327440.0,"bills":87,"days":19,"avg_bill":3763.68,"rev_day":17233.68,"n_branches":1,"branches":[{"bk":"par","rev":327440.0}],"index":166.5,"share":27.1},{"name":"Non","rev":278947.5,"bills":99,"days":21,"avg_bill":2817.65,"rev_day":13283.21,"n_branches":2,"branches":[{"bk":"lad","rev":155677.5},{"bk":"par","rev":123270.0}],"index":128.4,"share":23.1},{"name":"Ota","rev":211834.0,"bills":77,"days":15,"avg_bill":2751.09,"rev_day":14122.27,"n_branches":2,"branches":[{"bk":"lad","rev":199529.0},{"bk":"cw","rev":12305.0}],"index":136.5,"share":17.6},{"name":"Gear","rev":117499.32,"bills":46,"days":20,"avg_bill":2554.33,"rev_day":5874.97,"n_branches":1,"branches":[{"bk":"cw","rev":117499.32}],"index":56.8,"share":9.7},{"name":"Gust","rev":101483.72,"bills":45,"days":13,"avg_bill":2255.19,"rev_day":7806.44,"n_branches":2,"branches":[{"bk":"lad","rev":79596.03},{"bk":"cw","rev":21887.68}],"index":75.4,"share":8.4},{"name":"Aom","rev":93860.0,"bills":34,"days":9,"avg_bill":2760.59,"rev_day":10428.89,"n_branches":1,"branches":[{"bk":"par","rev":93860.0}],"index":100.8,"share":7.8},{"name":"sooya","rev":21170.0,"bills":8,"days":2,"avg_bill":2646.25,"rev_day":10585.0,"n_branches":1,"branches":[{"bk":"par","rev":21170.0}],"index":102.3,"share":1.8},{"name":"แทน","rev":21170.0,"bills":8,"days":2,"avg_bill":2646.25,"rev_day":10585.0,"n_branches":1,"branches":[{"bk":"par","rev":21170.0}],"index":102.3,"share":1.8},{"name":"Mumin","rev":18625.0,"bills":10,"days":2,"avg_bill":1862.5,"rev_day":9312.5,"n_branches":2,"branches":[{"bk":"lad","rev":14234.0},{"bk":"cw","rev":4391.0}],"index":90.0,"share":1.5},{"name":"Manrin","rev":11775.0,"bills":4,"days":1,"avg_bill":2943.75,"rev_day":11775.0,"n_branches":1,"branches":[{"bk":"cw","rev":11775.0}],"index":113.8,"share":1.0},{"name":"Gear​","rev":2831.0,"bills":1,"days":1,"avg_bill":2831.0,"rev_day":2831.0,"n_branches":1,"branches":[{"bk":"cw","rev":2831.0}],"index":27.4,"share":0.2}],"2026-03":{"par":[{"name":"Oat","rev":302930.0,"bills":87,"days":25,"avg_bill":3481.95,"rev_day":12117.2,"index":99.8,"share":48.0},{"name":"Aom","rev":118750.0,"bills":43,"days":8,"avg_bill":2761.63,"rev_day":14843.75,"index":122.3,"share":18.8},{"name":"Friend","rev":92290.0,"bills":23,"days":5,"avg_bill":4012.61,"rev_day":18458.0,"index":152.1,"share":14.6},{"name":"Name","rev":52960.0,"bills":14,"days":4,"avg_bill":3782.86,"rev_day":13240.0,"index":109.1,"share":8.4},{"name":"sooya","rev":27560.0,"bills":9,"days":2,"avg_bill":3062.22,"rev_day":13780.0,"index":113.5,"share":4.4},{"name":"Foon","rev":12140.0,"bills":3,"days":1,"avg_bill":4046.67,"rev_day":12140.0,"index":100.0,"share":1.9},{"name":"แทน","rev":12130.0,"bills":5,"days":1,"avg_bill":2426.0,"rev_day":12130.0,"index":99.9,"share":1.9},{"name":"Ota","rev":8650.0,"bills":2,"days":1,"avg_bill":4325.0,"rev_day":8650.0,"index":71.3,"share":1.4},{"name":"Ice","rev":3880.0,"bills":2,"days":1,"avg_bill":1940.0,"rev_day":3880.0,"index":32.0,"share":0.6}],"lad":[{"name":"Non","rev":231860.0,"bills":87,"days":24,"avg_bill":2665.06,"rev_day":9660.83,"index":68.4,"share":35.3},{"name":"Ota","rev":121158.0,"bills":42,"days":8,"avg_bill":2884.71,"rev_day":15144.75,"index":107.3,"share":18.5},{"name":"Gust","rev":102881.12,"bills":36,"days":7,"avg_bill":2857.81,"rev_day":14697.3,"index":104.1,"share":15.7},{"name":"Book","rev":78054.5,"bills":32,"days":9,"avg_bill":2439.2,"rev_day":8672.72,"index":61.4,"share":11.9},{"name":"Aom","rev":69837.0,"bills":19,"days":2,"avg_bill":3675.63,"rev_day":34918.5,"index":247.3,"share":10.6},{"name":"Name","rev":35627.0,"bills":15,"days":5,"avg_bill":2375.13,"rev_day":7125.4,"index":50.5,"share":5.4},{"name":"Wan","rev":17254.5,"bills":7,"days":2,"avg_bill":2464.93,"rev_day":8627.25,"index":61.1,"share":2.6}],"cw":[{"name":"Gear","rev":160002.6,"bills":55,"days":25,"avg_bill":2909.14,"rev_day":6400.1,"index":112.2,"share":84.1},{"name":"Non","rev":12205.9,"bills":4,"days":3,"avg_bill":3051.47,"rev_day":4068.63,"index":71.3,"share":6.4},{"name":"Gust","rev":9382.0,"bills":3,"days":1,"avg_bill":3127.33,"rev_day":9382.0,"index":164.5,"share":4.9},{"name":"Name","rev":7280.0,"bills":2,"days":1,"avg_bill":3640.0,"rev_day":7280.0,"index":127.6,"share":3.8},{"name":"Friendlg","rev":1390.0,"bills":1,"days":1,"avg_bill":1390.0,"rev_day":1390.0,"index":24.4,"share":0.7}],"emp":[],"pin":[]},"2026-03_ALLBRANCH":[{"name":"Oat","rev":302930.0,"bills":87,"days":25,"avg_bill":3481.95,"rev_day":12117.2,"n_branches":1,"branches":[{"bk":"par","rev":302930.0}],"index":111.1,"share":20.5},{"name":"Non","rev":244065.9,"bills":91,"days":27,"avg_bill":2682.04,"rev_day":9039.48,"n_branches":2,"branches":[{"bk":"lad","rev":231860.0},{"bk":"cw","rev":12205.9}],"index":82.9,"share":16.5},{"name":"Aom","rev":188587.0,"bills":62,"days":10,"avg_bill":3041.73,"rev_day":18858.7,"n_branches":2,"branches":[{"bk":"par","rev":118750.0},{"bk":"lad","rev":69837.0}],"index":173.0,"share":12.8},{"name":"Gear","rev":160002.6,"bills":55,"days":25,"avg_bill":2909.14,"rev_day":6400.1,"n_branches":1,"branches":[{"bk":"cw","rev":160002.6}],"index":58.7,"share":10.8},{"name":"Ota","rev":129808.0,"bills":44,"days":9,"avg_bill":2950.18,"rev_day":14423.11,"n_branches":2,"branches":[{"bk":"lad","rev":121158.0},{"bk":"par","rev":8650.0}],"index":132.3,"share":8.8},{"name":"Gust","rev":112263.12,"bills":39,"days":8,"avg_bill":2878.54,"rev_day":14032.89,"n_branches":2,"branches":[{"bk":"lad","rev":102881.12},{"bk":"cw","rev":9382.0}],"index":128.7,"share":7.6},{"name":"Name","rev":95867.0,"bills":31,"days":10,"avg_bill":3092.48,"rev_day":9586.7,"n_branches":3,"branches":[{"bk":"par","rev":52960.0},{"bk":"lad","rev":35627.0},{"bk":"cw","rev":7280.0}],"index":87.9,"share":6.5},{"name":"Friend","rev":92290.0,"bills":23,"days":5,"avg_bill":4012.61,"rev_day":18458.0,"n_branches":1,"branches":[{"bk":"par","rev":92290.0}],"index":169.3,"share":6.2},{"name":"Book","rev":78054.5,"bills":32,"days":9,"avg_bill":2439.2,"rev_day":8672.72,"n_branches":1,"branches":[{"bk":"lad","rev":78054.5}],"index":79.5,"share":5.3},{"name":"sooya","rev":27560.0,"bills":9,"days":2,"avg_bill":3062.22,"rev_day":13780.0,"n_branches":1,"branches":[{"bk":"par","rev":27560.0}],"index":126.4,"share":1.9},{"name":"Wan","rev":17254.5,"bills":7,"days":2,"avg_bill":2464.93,"rev_day":8627.25,"n_branches":1,"branches":[{"bk":"lad","rev":17254.5}],"index":79.1,"share":1.2},{"name":"Foon","rev":12140.0,"bills":3,"days":1,"avg_bill":4046.67,"rev_day":12140.0,"n_branches":1,"branches":[{"bk":"par","rev":12140.0}],"index":111.4,"share":0.8},{"name":"แทน","rev":12130.0,"bills":5,"days":1,"avg_bill":2426.0,"rev_day":12130.0,"n_branches":1,"branches":[{"bk":"par","rev":12130.0}],"index":111.3,"share":0.8},{"name":"Ice","rev":3880.0,"bills":2,"days":1,"avg_bill":1940.0,"rev_day":3880.0,"n_branches":1,"branches":[{"bk":"par","rev":3880.0}],"index":35.6,"share":0.3},{"name":"Friendlg","rev":1390.0,"bills":1,"days":1,"avg_bill":1390.0,"rev_day":1390.0,"n_branches":1,"branches":[{"bk":"cw","rev":1390.0}],"index":12.7,"share":0.1}],"2026-04":{"par":[{"name":"Oat","rev":320780.0,"bills":83,"days":22,"avg_bill":3864.82,"rev_day":14580.91,"index":80.6,"share":46.0},{"name":"Friend","rev":123900.0,"bills":37,"days":5,"avg_bill":3348.65,"rev_day":24780.0,"index":136.9,"share":17.8},{"name":"Aom","rev":111100.0,"bills":21,"days":6,"avg_bill":5290.48,"rev_day":18516.67,"index":102.3,"share":15.9},{"name":"Four","rev":31820.0,"bills":6,"days":1,"avg_bill":5303.33,"rev_day":31820.0,"index":175.8,"share":4.6},{"name":"Foon","rev":25360.0,"bills":6,"days":2,"avg_bill":4226.67,"rev_day":12680.0,"index":70.1,"share":3.6},{"name":"Fa (แทน)","rev":24950.0,"bills":4,"days":1,"avg_bill":6237.5,"rev_day":24950.0,"index":137.9,"share":3.6},{"name":"Ice","rev":23050.0,"bills":7,"days":1,"avg_bill":3292.86,"rev_day":23050.0,"index":127.4,"share":3.3},{"name":"Ota","rev":14010.0,"bills":2,"days":1,"avg_bill":7005.0,"rev_day":14010.0,"index":77.4,"share":2.0},{"name":"sarun","rev":12640.0,"bills":3,"days":2,"avg_bill":4213.33,"rev_day":6320.0,"index":34.9,"share":1.8},{"name":"nureeya","rev":10260.0,"bills":3,"days":1,"avg_bill":3420.0,"rev_day":10260.0,"index":56.7,"share":1.5}],"lad":[{"name":"Non","rev":242795.0,"bills":82,"days":20,"avg_bill":2960.91,"rev_day":12139.75,"index":106.8,"share":41.6},{"name":"Ota","rev":164922.0,"bills":52,"days":14,"avg_bill":3171.58,"rev_day":11780.14,"index":103.7,"share":28.3},{"name":"Four","rev":84744.0,"bills":30,"days":8,"avg_bill":2824.8,"rev_day":10593.0,"index":93.2,"share":14.5},{"name":"Aom","rev":38716.0,"bills":14,"days":3,"avg_bill":2765.43,"rev_day":12905.33,"index":113.6,"share":6.6},{"name":"Foon","rev":17292.0,"bills":5,"days":2,"avg_bill":3458.4,"rev_day":8646.0,"index":76.1,"share":3.0},{"name":"Oat","rev":12663.0,"bills":4,"days":1,"avg_bill":3165.75,"rev_day":12663.0,"index":111.5,"share":2.2},{"name":"Gust","rev":12449.0,"bills":3,"days":1,"avg_bill":4149.67,"rev_day":12449.0,"index":109.6,"share":2.1},{"name":"Friend","rev":9717.0,"bills":3,"days":1,"avg_bill":3239.0,"rev_day":9717.0,"index":85.5,"share":1.7}],"cw":[{"name":"Gear","rev":97230.67,"bills":31,"days":15,"avg_bill":3136.47,"rev_day":6482.04,"index":117.9,"share":72.8},{"name":"Friend","rev":17131.0,"bills":5,"days":3,"avg_bill":3426.2,"rev_day":5710.33,"index":103.9,"share":12.8},{"name":"Gust","rev":14008.5,"bills":5,"days":3,"avg_bill":2801.7,"rev_day":4669.5,"index":84.9,"share":10.5},{"name":"Gear​","rev":5127.83,"bills":1,"days":1,"avg_bill":5127.83,"rev_day":5127.83,"index":93.3,"share":3.8}],"emp":[{"name":"Foon","rev":156515.37,"bills":61,"days":18,"avg_bill":2565.83,"rev_day":8695.3,"index":125.2,"share":42.5},{"name":"Sran","rev":71829.81,"bills":26,"days":9,"avg_bill":2762.69,"rev_day":7981.09,"index":115.0,"share":19.5},{"name":"Ice","rev":66338.17,"bills":24,"days":6,"avg_bill":2764.09,"rev_day":11056.36,"index":159.3,"share":18.0},{"name":"Friend","rev":65953.31,"bills":30,"days":11,"avg_bill":2198.44,"rev_day":5995.76,"index":86.4,"share":17.9},{"name":"Oat","rev":6416.0,"bills":3,"days":1,"avg_bill":2138.67,"rev_day":6416.0,"index":92.4,"share":1.7},{"name":"Ota","rev":1509.64,"bills":1,"days":1,"avg_bill":1509.64,"rev_day":1509.64,"index":21.7,"share":0.4}],"pin":[]},"2026-04_ALLBRANCH":[{"name":"Oat","rev":339859.0,"bills":90,"days":24,"avg_bill":3776.21,"rev_day":14160.79,"n_branches":3,"branches":[{"bk":"par","rev":320780.0},{"bk":"lad","rev":12663.0},{"bk":"emp","rev":6416.0}],"index":126.4,"share":19.1},{"name":"Non","rev":242795.0,"bills":82,"days":20,"avg_bill":2960.91,"rev_day":12139.75,"n_branches":1,"branches":[{"bk":"lad","rev":242795.0}],"index":108.4,"share":13.6},{"name":"Friend","rev":216701.31,"bills":75,"days":20,"avg_bill":2889.35,"rev_day":10835.07,"n_branches":4,"branches":[{"bk":"par","rev":123900.0},{"bk":"emp","rev":65953.31},{"bk":"cw","rev":17131.0},{"bk":"lad","rev":9717.0}],"index":96.7,"share":12.2},{"name":"Foon","rev":199167.37,"bills":72,"days":21,"avg_bill":2766.21,"rev_day":9484.16,"n_branches":3,"branches":[{"bk":"emp","rev":156515.37},{"bk":"par","rev":25360.0},{"bk":"lad","rev":17292.0}],"index":84.7,"share":11.2},{"name":"Ota","rev":180441.64,"bills":55,"days":16,"avg_bill":3280.76,"rev_day":11277.6,"n_branches":3,"branches":[{"bk":"lad","rev":164922.0},{"bk":"par","rev":14010.0},{"bk":"emp","rev":1509.64}],"index":100.7,"share":10.1},{"name":"Aom","rev":149816.0,"bills":35,"days":9,"avg_bill":4280.46,"rev_day":16646.22,"n_branches":2,"branches":[{"bk":"par","rev":111100.0},{"bk":"lad","rev":38716.0}],"index":148.6,"share":8.4},{"name":"Four","rev":116564.0,"bills":36,"days":9,"avg_bill":3237.89,"rev_day":12951.56,"n_branches":2,"branches":[{"bk":"lad","rev":84744.0},{"bk":"par","rev":31820.0}],"index":115.6,"share":6.5},{"name":"Gear","rev":97230.67,"bills":31,"days":15,"avg_bill":3136.47,"rev_day":6482.04,"n_branches":1,"branches":[{"bk":"cw","rev":97230.67}],"index":57.9,"share":5.5},{"name":"Ice","rev":89388.17,"bills":31,"days":7,"avg_bill":2883.49,"rev_day":12769.74,"n_branches":2,"branches":[{"bk":"emp","rev":66338.17},{"bk":"par","rev":23050.0}],"index":114.0,"share":5.0},{"name":"Sran","rev":71829.81,"bills":26,"days":9,"avg_bill":2762.69,"rev_day":7981.09,"n_branches":1,"branches":[{"bk":"emp","rev":71829.81}],"index":71.3,"share":4.0},{"name":"Gust","rev":26457.5,"bills":8,"days":4,"avg_bill":3307.19,"rev_day":6614.38,"n_branches":2,"branches":[{"bk":"cw","rev":14008.5},{"bk":"lad","rev":12449.0}],"index":59.1,"share":1.5},{"name":"Fa (แทน)","rev":24950.0,"bills":4,"days":1,"avg_bill":6237.5,"rev_day":24950.0,"n_branches":1,"branches":[{"bk":"par","rev":24950.0}],"index":222.8,"share":1.4},{"name":"sarun","rev":12640.0,"bills":3,"days":2,"avg_bill":4213.33,"rev_day":6320.0,"n_branches":1,"branches":[{"bk":"par","rev":12640.0}],"index":56.4,"share":0.7},{"name":"nureeya","rev":10260.0,"bills":3,"days":1,"avg_bill":3420.0,"rev_day":10260.0,"n_branches":1,"branches":[{"bk":"par","rev":10260.0}],"index":91.6,"share":0.6},{"name":"Gear​","rev":5127.83,"bills":1,"days":1,"avg_bill":5127.83,"rev_day":5127.83,"n_branches":1,"branches":[{"bk":"cw","rev":5127.83}],"index":45.8,"share":0.3}],"2026-05":{"par":[{"name":"Oat","rev":212210.0,"bills":60,"days":11,"avg_bill":3536.83,"rev_day":19291.82,"index":131.8,"share":43.7},{"name":"Friend","rev":108510.0,"bills":34,"days":7,"avg_bill":3191.47,"rev_day":15501.43,"index":105.9,"share":22.3},{"name":"Four","rev":85850.0,"bills":22,"days":3,"avg_bill":3902.27,"rev_day":28616.67,"index":195.5,"share":17.7},{"name":"Gust","rev":31010.0,"bills":10,"days":3,"avg_bill":3101.0,"rev_day":10336.67,"index":70.6,"share":6.4},{"name":"Ota","rev":20190.0,"bills":6,"days":1,"avg_bill":3365.0,"rev_day":20190.0,"index":137.9,"share":4.2},{"name":"Sran","rev":14300.0,"bills":5,"days":1,"avg_bill":2860.0,"rev_day":14300.0,"index":97.7,"share":2.9},{"name":"Aom","rev":9440.0,"bills":4,"days":2,"avg_bill":2360.0,"rev_day":4720.0,"index":32.2,"share":1.9},{"name":"Suya","rev":4170.0,"bills":2,"days":1,"avg_bill":2085.0,"rev_day":4170.0,"index":28.5,"share":0.9}],"lad":[{"name":"Four","rev":197674.0,"bills":67,"days":14,"avg_bill":2950.36,"rev_day":14119.57,"index":86.2,"share":31.4},{"name":"Ota","rev":144130.0,"bills":41,"days":12,"avg_bill":3515.37,"rev_day":12010.83,"index":73.3,"share":22.9},{"name":"Gust","rev":102825.5,"bills":35,"days":9,"avg_bill":2937.87,"rev_day":11425.06,"index":69.8,"share":16.4},{"name":"Aom","rev":89945.0,"bills":33,"days":9,"avg_bill":2725.61,"rev_day":9993.89,"index":61.0,"share":14.3},{"name":"Non","rev":30492.0,"bills":9,"days":1,"avg_bill":3388.0,"rev_day":30492.0,"index":186.2,"share":4.8},{"name":"Nut","rev":27280.5,"bills":6,"days":1,"avg_bill":4546.75,"rev_day":27280.5,"index":166.6,"share":4.3},{"name":"Friend","rev":21700.5,"bills":7,"days":2,"avg_bill":3100.07,"rev_day":10850.25,"index":66.3,"share":3.5},{"name":"Oat","rev":14838.0,"bills":7,"days":1,"avg_bill":2119.71,"rev_day":14838.0,"index":90.6,"share":2.4}],"cw":[{"name":"Gear","rev":179584.5,"bills":60,"days":22,"avg_bill":2993.07,"rev_day":8162.93,"index":76.9,"share":55.8},{"name":"Friend","rev":73499.5,"bills":23,"days":7,"avg_bill":3195.63,"rev_day":10499.93,"index":98.9,"share":22.8},{"name":"Aom","rev":41241.0,"bills":15,"days":6,"avg_bill":2749.4,"rev_day":6873.5,"index":64.7,"share":12.8},{"name":"Gust","rev":15394.0,"bills":3,"days":1,"avg_bill":5131.33,"rev_day":15394.0,"index":144.9,"share":4.8},{"name":"Non","rev":12176.0,"bills":6,"days":1,"avg_bill":2029.33,"rev_day":12176.0,"index":114.6,"share":3.8}],"emp":[{"name":"Foon","rev":153701.29,"bills":66,"days":24,"avg_bill":2328.81,"rev_day":6404.22,"index":80.7,"share":59.9},{"name":"Ice","rev":78871.47,"bills":30,"days":11,"avg_bill":2629.05,"rev_day":7170.13,"index":90.4,"share":30.7},{"name":"Mumin","rev":16203.0,"bills":4,"days":1,"avg_bill":4050.75,"rev_day":16203.0,"index":204.2,"share":6.3},{"name":"Friend","rev":7848.04,"bills":7,"days":4,"avg_bill":1121.15,"rev_day":1962.01,"index":24.7,"share":3.1}],"pin":[]},"2026-05_ALLBRANCH":[{"name":"Four","rev":283524.0,"bills":89,"days":17,"avg_bill":3185.66,"rev_day":16677.88,"n_branches":2,"branches":[{"bk":"lad","rev":197674.0},{"bk":"par","rev":85850.0}],"index":127.2,"share":16.7},{"name":"Oat","rev":227048.0,"bills":67,"days":12,"avg_bill":3388.78,"rev_day":18920.67,"n_branches":2,"branches":[{"bk":"par","rev":212210.0},{"bk":"lad","rev":14838.0}],"index":144.3,"share":13.4},{"name":"Friend","rev":211558.04,"bills":71,"days":20,"avg_bill":2979.69,"rev_day":10577.9,"n_branches":4,"branches":[{"bk":"par","rev":108510.0},{"bk":"cw","rev":73499.5},{"bk":"lad","rev":21700.5},{"bk":"emp","rev":7848.04}],"index":80.7,"share":12.5},{"name":"Gear","rev":179584.5,"bills":60,"days":22,"avg_bill":2993.07,"rev_day":8162.93,"n_branches":1,"branches":[{"bk":"cw","rev":179584.5}],"index":62.2,"share":10.6},{"name":"Ota","rev":164320.0,"bills":47,"days":13,"avg_bill":3496.17,"rev_day":12640.0,"n_branches":2,"branches":[{"bk":"lad","rev":144130.0},{"bk":"par","rev":20190.0}],"index":96.4,"share":9.7},{"name":"Foon","rev":153701.29,"bills":66,"days":24,"avg_bill":2328.81,"rev_day":6404.22,"n_branches":1,"branches":[{"bk":"emp","rev":153701.29}],"index":48.8,"share":9.1},{"name":"Gust","rev":149229.5,"bills":48,"days":13,"avg_bill":3108.95,"rev_day":11479.19,"n_branches":3,"branches":[{"bk":"lad","rev":102825.5},{"bk":"par","rev":31010.0},{"bk":"cw","rev":15394.0}],"index":87.5,"share":8.8},{"name":"Aom","rev":140626.0,"bills":52,"days":17,"avg_bill":2704.35,"rev_day":8272.12,"n_branches":3,"branches":[{"bk":"lad","rev":89945.0},{"bk":"cw","rev":41241.0},{"bk":"par","rev":9440.0}],"index":63.1,"share":8.3},{"name":"Ice","rev":78871.47,"bills":30,"days":11,"avg_bill":2629.05,"rev_day":7170.13,"n_branches":1,"branches":[{"bk":"emp","rev":78871.47}],"index":54.7,"share":4.7},{"name":"Non","rev":42668.0,"bills":15,"days":2,"avg_bill":2844.53,"rev_day":21334.0,"n_branches":2,"branches":[{"bk":"lad","rev":30492.0},{"bk":"cw","rev":12176.0}],"index":162.7,"share":2.5},{"name":"Nut","rev":27280.5,"bills":6,"days":1,"avg_bill":4546.75,"rev_day":27280.5,"n_branches":1,"branches":[{"bk":"lad","rev":27280.5}],"index":208.0,"share":1.6},{"name":"Mumin","rev":16203.0,"bills":4,"days":1,"avg_bill":4050.75,"rev_day":16203.0,"n_branches":1,"branches":[{"bk":"emp","rev":16203.0}],"index":123.6,"share":1.0},{"name":"Sran","rev":14300.0,"bills":5,"days":1,"avg_bill":2860.0,"rev_day":14300.0,"n_branches":1,"branches":[{"bk":"par","rev":14300.0}],"index":109.0,"share":0.8},{"name":"Suya","rev":4170.0,"bills":2,"days":1,"avg_bill":2085.0,"rev_day":4170.0,"n_branches":1,"branches":[{"bk":"par","rev":4170.0}],"index":31.8,"share":0.2}],"2026-06":{"par":[{"name":"Ploy","rev":464510.0,"bills":99,"days":21,"avg_bill":4692.02,"rev_day":22119.52,"index":116.9,"share":52.6},{"name":"Friend","rev":305720.0,"bills":60,"days":9,"avg_bill":5095.33,"rev_day":33968.89,"index":179.5,"share":34.6},{"name":"Ice","rev":61770.0,"bills":16,"days":2,"avg_bill":3860.62,"rev_day":30885.0,"index":163.2,"share":7.0},{"name":"Aom","rev":31810.0,"bills":7,"days":2,"avg_bill":4544.29,"rev_day":15905.0,"index":84.0,"share":3.6},{"name":"Gust","rev":17590.0,"bills":2,"days":2,"avg_bill":8795.0,"rev_day":8795.0,"index":46.5,"share":2.0},{"name":"Firend","rev":1890.0,"bills":1,"days":1,"avg_bill":1890.0,"rev_day":1890.0,"index":10.0,"share":0.2}],"lad":[{"name":"Aom","rev":132167.0,"bills":41,"days":8,"avg_bill":3223.59,"rev_day":16520.87,"index":210.3,"share":33.1},{"name":"Sam","rev":65613.0,"bills":24,"days":8,"avg_bill":2733.88,"rev_day":8201.62,"index":104.4,"share":16.4},{"name":"Ota","rev":61540.0,"bills":21,"days":7,"avg_bill":2930.48,"rev_day":8791.43,"index":111.9,"share":15.4},{"name":"Chom","rev":52347.0,"bills":17,"days":7,"avg_bill":3079.24,"rev_day":7478.14,"index":95.2,"share":13.1},{"name":"Mos","rev":29940.0,"bills":11,"days":4,"avg_bill":2721.82,"rev_day":7485.0,"index":95.3,"share":7.5},{"name":"foou","rev":12988.0,"bills":5,"days":1,"avg_bill":2597.6,"rev_day":12988.0,"index":165.3,"share":3.3},{"name":"Chompoo","rev":12977.5,"bills":4,"days":2,"avg_bill":3244.38,"rev_day":6488.75,"index":82.6,"share":3.3},{"name":"Four","rev":10580.0,"bills":3,"days":1,"avg_bill":3526.67,"rev_day":10580.0,"index":134.7,"share":2.7},{"name":"Gust","rev":10082.0,"bills":5,"days":2,"avg_bill":2016.4,"rev_day":5041.0,"index":64.2,"share":2.5},{"name":"Mumin","rev":5532.0,"bills":2,"days":1,"avg_bill":2766.0,"rev_day":5532.0,"index":70.4,"share":1.4},{"name":"Ya","rev":3480.0,"bills":2,"days":1,"avg_bill":1740.0,"rev_day":3480.0,"index":44.3,"share":0.9},{"name":"AO แทน","rev":1690.0,"bills":1,"days":1,"avg_bill":1690.0,"rev_day":1690.0,"index":21.5,"share":0.4}],"cw":[{"name":"Friend","rev":129309.5,"bills":34,"days":10,"avg_bill":3803.22,"rev_day":12930.95,"index":136.8,"share":44.5},{"name":"Mos","rev":45736.5,"bills":12,"days":4,"avg_bill":3811.38,"rev_day":11434.13,"index":121.0,"share":15.7},{"name":"Aom","rev":31126.5,"bills":9,"days":4,"avg_bill":3458.5,"rev_day":7781.62,"index":82.4,"share":10.7},{"name":"Cii","rev":28978.0,"bills":6,"days":2,"avg_bill":4829.67,"rev_day":14489.0,"index":153.3,"share":10.0},{"name":"Gust","rev":25811.5,"bills":8,"days":3,"avg_bill":3226.44,"rev_day":8603.83,"index":91.1,"share":8.9},{"name":"Gear​","rev":23540.0,"bills":6,"days":3,"avg_bill":3923.33,"rev_day":7846.67,"index":83.0,"share":8.1},{"name":"Gear","rev":6118.0,"bills":2,"days":2,"avg_bill":3059.0,"rev_day":3059.0,"index":32.4,"share":2.1}],"emp":[{"name":"Mos","rev":93861.0,"bills":31,"days":13,"avg_bill":3027.77,"rev_day":7220.08,"index":111.2,"share":40.4},{"name":"Foon","rev":80766.5,"bills":33,"days":13,"avg_bill":2447.47,"rev_day":6212.81,"index":95.7,"share":34.8},{"name":"Ice","rev":38516.0,"bills":12,"days":4,"avg_bill":3209.67,"rev_day":9629.0,"index":148.3,"share":16.6},{"name":"Friend","rev":12620.0,"bills":4,"days":1,"avg_bill":3155.0,"rev_day":12620.0,"index":194.4,"share":5.4},{"name":"Palm","rev":6553.0,"bills":4,"days":2,"avg_bill":1638.25,"rev_day":3276.5,"index":50.5,"share":2.8},{"name":"Aom","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0.0,"share":0.0}],"pin":[]},"2026-06_ALLBRANCH":[{"name":"Ploy","rev":464510.0,"bills":99,"days":21,"avg_bill":4692.02,"rev_day":22119.52,"n_branches":1,"branches":[{"bk":"par","rev":464510.0}],"index":242.0,"share":25.7},{"name":"Friend","rev":447649.5,"bills":98,"days":20,"avg_bill":4567.85,"rev_day":22382.48,"n_branches":3,"branches":[{"bk":"par","rev":305720.0},{"bk":"cw","rev":129309.5},{"bk":"emp","rev":12620.0}],"index":244.9,"share":24.8},{"name":"Aom","rev":195103.5,"bills":58,"days":15,"avg_bill":3363.85,"rev_day":13006.9,"n_branches":4,"branches":[{"bk":"lad","rev":132167.0},{"bk":"par","rev":31810.0},{"bk":"cw","rev":31126.5},{"bk":"emp","rev":0.0}],"index":142.3,"share":10.8},{"name":"Mos","rev":169537.5,"bills":54,"days":21,"avg_bill":3139.58,"rev_day":8073.21,"n_branches":3,"branches":[{"bk":"emp","rev":93861.0},{"bk":"cw","rev":45736.5},{"bk":"lad","rev":29940.0}],"index":88.3,"share":9.4},{"name":"Ice","rev":100286.0,"bills":28,"days":6,"avg_bill":3581.64,"rev_day":16714.33,"n_branches":2,"branches":[{"bk":"par","rev":61770.0},{"bk":"emp","rev":38516.0}],"index":182.9,"share":5.6},{"name":"Foon","rev":80766.5,"bills":33,"days":13,"avg_bill":2447.47,"rev_day":6212.81,"n_branches":1,"branches":[{"bk":"emp","rev":80766.5}],"index":68.0,"share":4.5},{"name":"Sam","rev":65613.0,"bills":24,"days":8,"avg_bill":2733.88,"rev_day":8201.62,"n_branches":1,"branches":[{"bk":"lad","rev":65613.0}],"index":89.7,"share":3.6},{"name":"Ota","rev":61540.0,"bills":21,"days":7,"avg_bill":2930.48,"rev_day":8791.43,"n_branches":1,"branches":[{"bk":"lad","rev":61540.0}],"index":96.2,"share":3.4},{"name":"Gust","rev":53483.5,"bills":15,"days":7,"avg_bill":3565.57,"rev_day":7640.5,"n_branches":3,"branches":[{"bk":"cw","rev":25811.5},{"bk":"par","rev":17590.0},{"bk":"lad","rev":10082.0}],"index":83.6,"share":3.0},{"name":"Chom","rev":52347.0,"bills":17,"days":7,"avg_bill":3079.24,"rev_day":7478.14,"n_branches":1,"branches":[{"bk":"lad","rev":52347.0}],"index":81.8,"share":2.9},{"name":"Cii","rev":28978.0,"bills":6,"days":2,"avg_bill":4829.67,"rev_day":14489.0,"n_branches":1,"branches":[{"bk":"cw","rev":28978.0}],"index":158.5,"share":1.6},{"name":"Gear​","rev":23540.0,"bills":6,"days":3,"avg_bill":3923.33,"rev_day":7846.67,"n_branches":1,"branches":[{"bk":"cw","rev":23540.0}],"index":85.8,"share":1.3},{"name":"foou","rev":12988.0,"bills":5,"days":1,"avg_bill":2597.6,"rev_day":12988.0,"n_branches":1,"branches":[{"bk":"lad","rev":12988.0}],"index":142.1,"share":0.7},{"name":"Chompoo","rev":12977.5,"bills":4,"days":2,"avg_bill":3244.38,"rev_day":6488.75,"n_branches":1,"branches":[{"bk":"lad","rev":12977.5}],"index":71.0,"share":0.7},{"name":"Four","rev":10580.0,"bills":3,"days":1,"avg_bill":3526.67,"rev_day":10580.0,"n_branches":1,"branches":[{"bk":"lad","rev":10580.0}],"index":115.8,"share":0.6},{"name":"Palm","rev":6553.0,"bills":4,"days":2,"avg_bill":1638.25,"rev_day":3276.5,"n_branches":1,"branches":[{"bk":"emp","rev":6553.0}],"index":35.8,"share":0.4},{"name":"Gear","rev":6118.0,"bills":2,"days":2,"avg_bill":3059.0,"rev_day":3059.0,"n_branches":1,"branches":[{"bk":"cw","rev":6118.0}],"index":33.5,"share":0.3},{"name":"Mumin","rev":5532.0,"bills":2,"days":1,"avg_bill":2766.0,"rev_day":5532.0,"n_branches":1,"branches":[{"bk":"lad","rev":5532.0}],"index":60.5,"share":0.3},{"name":"Ya","rev":3480.0,"bills":2,"days":1,"avg_bill":1740.0,"rev_day":3480.0,"n_branches":1,"branches":[{"bk":"lad","rev":3480.0}],"index":38.1,"share":0.2},{"name":"Firend","rev":1890.0,"bills":1,"days":1,"avg_bill":1890.0,"rev_day":1890.0,"n_branches":1,"branches":[{"bk":"par","rev":1890.0}],"index":20.7,"share":0.1},{"name":"AO แทน","rev":1690.0,"bills":1,"days":1,"avg_bill":1690.0,"rev_day":1690.0,"n_branches":1,"branches":[{"bk":"lad","rev":1690.0}],"index":18.5,"share":0.1}],"2026-07":{"par":[{"name":"Ploy","rev":438959.0,"bills":101,"days":19,"avg_bill":4346.13,"rev_day":23103.11,"index":145.0,"share":84.1},{"name":"Aom","rev":39130.0,"bills":9,"days":3,"avg_bill":4347.78,"rev_day":13043.33,"index":81.8,"share":7.5},{"name":"Partime","rev":32730.0,"bills":7,"days":2,"avg_bill":4675.71,"rev_day":16365.0,"index":102.7,"share":6.3},{"name":"Sam","rev":11240.0,"bills":2,"days":1,"avg_bill":5620.0,"rev_day":11240.0,"index":70.5,"share":2.2}],"lad":[{"name":"Chom","rev":111138.5,"bills":41,"days":15,"avg_bill":2710.7,"rev_day":7409.23,"index":56.9,"share":29.8},{"name":"Aom","rev":69405.0,"bills":27,"days":7,"avg_bill":2570.56,"rev_day":9915.0,"index":76.2,"share":18.6},{"name":"Sam","rev":47518.0,"bills":15,"days":5,"avg_bill":3167.87,"rev_day":9503.6,"index":73.0,"share":12.8},{"name":"Frien","rev":39598.0,"bills":12,"days":3,"avg_bill":3299.83,"rev_day":13199.33,"index":101.4,"share":10.6},{"name":"Ray","rev":34127.0,"bills":12,"days":2,"avg_bill":2843.92,"rev_day":17063.5,"index":131.1,"share":9.2},{"name":"Friend","rev":31937.0,"bills":10,"days":2,"avg_bill":3193.7,"rev_day":15968.5,"index":122.7,"share":8.6},{"name":"Jinny","rev":23499.5,"bills":6,"days":1,"avg_bill":3916.58,"rev_day":23499.5,"index":180.6,"share":6.3},{"name":"Est","rev":15126.0,"bills":4,"days":2,"avg_bill":3781.5,"rev_day":7563.0,"index":58.1,"share":4.1}],"cw":[{"name":"Cii","rev":139092.5,"bills":41,"days":15,"avg_bill":3392.5,"rev_day":9272.83,"index":107.3,"share":45.1},{"name":"Friend","rev":97743.0,"bills":31,"days":7,"avg_bill":3153.0,"rev_day":13963.29,"index":161.6,"share":31.7},{"name":"Ray","rev":41963.5,"bills":11,"days":3,"avg_bill":3814.86,"rev_day":13987.83,"index":161.9,"share":13.6},{"name":"Frien","rev":13144.0,"bills":3,"days":1,"avg_bill":4381.33,"rev_day":13144.0,"index":152.1,"share":4.3},{"name":"Gust","rev":12292.0,"bills":6,"days":2,"avg_bill":2048.67,"rev_day":6146.0,"index":71.1,"share":4.0},{"name":"Aom","rev":2490.0,"bills":1,"days":1,"avg_bill":2490.0,"rev_day":2490.0,"index":28.8,"share":0.8},{"name":"Ice","rev":1490.0,"bills":1,"days":1,"avg_bill":1490.0,"rev_day":1490.0,"index":17.2,"share":0.5}],"emp":[{"name":"Mos","rev":143460.0,"bills":50,"days":25,"avg_bill":2869.2,"rev_day":5738.4,"index":79.1,"share":89.9},{"name":"Friend","rev":16034.0,"bills":5,"days":1,"avg_bill":3206.8,"rev_day":16034.0,"index":220.9,"share":10.1},{"name":"fah","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"index":0.0,"share":0.0}],"pin":[]},"2026-07_ALLBRANCH":[{"name":"Ploy","rev":438959.0,"bills":101,"days":19,"avg_bill":4346.13,"rev_day":23103.11,"n_branches":1,"branches":[{"bk":"par","rev":438959.0}],"index":212.0,"share":32.2},{"name":"Friend","rev":145714.0,"bills":46,"days":10,"avg_bill":3167.7,"rev_day":14571.4,"n_branches":3,"branches":[{"bk":"cw","rev":97743.0},{"bk":"lad","rev":31937.0},{"bk":"emp","rev":16034.0}],"index":133.7,"share":10.7},{"name":"Mos","rev":143460.0,"bills":50,"days":25,"avg_bill":2869.2,"rev_day":5738.4,"n_branches":1,"branches":[{"bk":"emp","rev":143460.0}],"index":52.7,"share":10.5},{"name":"Cii","rev":139092.5,"bills":41,"days":15,"avg_bill":3392.5,"rev_day":9272.83,"n_branches":1,"branches":[{"bk":"cw","rev":139092.5}],"index":85.1,"share":10.2},{"name":"Chom","rev":111138.5,"bills":41,"days":15,"avg_bill":2710.7,"rev_day":7409.23,"n_branches":1,"branches":[{"bk":"lad","rev":111138.5}],"index":68.0,"share":8.2},{"name":"Aom","rev":111025.0,"bills":37,"days":11,"avg_bill":3000.68,"rev_day":10093.18,"n_branches":3,"branches":[{"bk":"lad","rev":69405.0},{"bk":"par","rev":39130.0},{"bk":"cw","rev":2490.0}],"index":92.6,"share":8.2},{"name":"Ray","rev":76090.5,"bills":23,"days":5,"avg_bill":3308.28,"rev_day":15218.1,"n_branches":2,"branches":[{"bk":"cw","rev":41963.5},{"bk":"lad","rev":34127.0}],"index":139.7,"share":5.6},{"name":"Sam","rev":58758.0,"bills":17,"days":6,"avg_bill":3456.35,"rev_day":9793.0,"n_branches":2,"branches":[{"bk":"lad","rev":47518.0},{"bk":"par","rev":11240.0}],"index":89.9,"share":4.3},{"name":"Frien","rev":52742.0,"bills":15,"days":4,"avg_bill":3516.13,"rev_day":13185.5,"n_branches":2,"branches":[{"bk":"lad","rev":39598.0},{"bk":"cw","rev":13144.0}],"index":121.0,"share":3.9},{"name":"Partime","rev":32730.0,"bills":7,"days":2,"avg_bill":4675.71,"rev_day":16365.0,"n_branches":1,"branches":[{"bk":"par","rev":32730.0}],"index":150.2,"share":2.4},{"name":"Jinny","rev":23499.5,"bills":6,"days":1,"avg_bill":3916.58,"rev_day":23499.5,"n_branches":1,"branches":[{"bk":"lad","rev":23499.5}],"index":215.7,"share":1.7},{"name":"Est","rev":15126.0,"bills":4,"days":2,"avg_bill":3781.5,"rev_day":7563.0,"n_branches":1,"branches":[{"bk":"lad","rev":15126.0}],"index":69.4,"share":1.1},{"name":"Gust","rev":12292.0,"bills":6,"days":2,"avg_bill":2048.67,"rev_day":6146.0,"n_branches":1,"branches":[{"bk":"cw","rev":12292.0}],"index":56.4,"share":0.9},{"name":"Ice","rev":1490.0,"bills":1,"days":1,"avg_bill":1490.0,"rev_day":1490.0,"n_branches":1,"branches":[{"bk":"cw","rev":1490.0}],"index":13.7,"share":0.1},{"name":"fah","rev":0.0,"bills":1,"days":1,"avg_bill":0.0,"rev_day":0.0,"n_branches":1,"branches":[{"bk":"emp","rev":0.0}],"index":0.0,"share":0.0}]}};
+
+/* ===== LIVE DATA LOADER : ดึง data.json มาแทน daily + monthly ===== */
+function __num(v){
+  if(v===null||v===undefined) return 0;
+  const s=String(v).replace(/[^0-9.\-]/g,'');
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+/* คอลัมน์ใน Summary_Daily: 0=date 2=Ladprao 3=Pinklao 4=Paragon 5=CentralWorld 6=Emporium */
+function __applySheet(D, rows){
+  const COL={lad:2,pin:3,par:4,cw:5,emp:6};
+  const out=[];
+  for(const row of rows){
+    if(!row||!row[0]) continue;
+    const d=String(row[0]);
+    if(!/^\d{2}\/\d{2}\/\d{4}$/.test(d)) continue;
+    const lad=__num(row[COL.lad]), pin=__num(row[COL.pin]), par=__num(row[COL.par]),
+          cw=__num(row[COL.cw]),  emp=__num(row[COL.emp]);
+    const tot=lad+pin+par+cw+emp;
+    if(tot<=0) continue;
+    out.push([d,lad,pin,par,cw,emp,tot]);
   }
+  if(!out.length) return false;
+
+  /* เรียงตามวันที่จริง */
+  const key=s=>{const[m,dd,y]=s.split('/').map(Number);return y*10000+m*100+dd;};
+  out.sort((a,b)=>key(a[0])-key(b[0]));
+  D.daily=out;
+
+  /* สร้าง monthly ใหม่ให้ตรงกับ D.months */
+  const MN={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,
+            September:8,October:9,November:10,December:11};
+  const slot={};
+  D.months.forEach((label,i)=>{const[mo,yr]=label.split(' ');slot[yr+'-'+MN[mo]]=i;});
+  const NAME={lad:'Central Ladprao',pin:'Central Pinklao',par:'Siam Paragon',
+              cw:'Central World',emp:'Emporium'};
+  const mon={}; Object.values(NAME).forEach(n=>mon[n]=new Array(D.months.length).fill(0));
+  for(const r of out){
+    const[m,dd,y]=r[0].split('/').map(Number);
+    const i=slot[y+'-'+(m-1)];
+    if(i===undefined) continue;
+    mon[NAME.lad][i]+=r[1]; mon[NAME.pin][i]+=r[2]; mon[NAME.par][i]+=r[3];
+    mon[NAME.cw][i]+=r[4];  mon[NAME.emp][i]+=r[5];
+  }
+  D.monthly=mon;
+  return true;
 }
 
-function parseData(rawData) {
-  const STORES = [
-    {key: 'lad', name: 'Central Ladprao', idx: 2, color: '#9B3A52'},
-    {key: 'pin', name: 'Central Pinklao', idx: 3, color: '#D96A78'},
-    {key: 'par', name: 'Siam Paragon', idx: 4, color: '#E08B3D'},
-    {key: 'cw', name: 'Central World', idx: 5, color: '#5FB28A'},
-    {key: 'emp', name: 'Emporium', idx: 6, color: '#B79AA2'},
-  ];
-  
-  const daily = [];
-  const months = ['Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026'];
-  const monthlyData = {};
-  
-  STORES.forEach(s => monthlyData[s.name] = new Array(months.length).fill(0));
-  
-  // แปลงข้อความที่มีคอมมา เช่น "7,665.00" ให้เป็นตัวเลข 7665
-  const toNum = v => {
-    if (v === null || v === undefined) return 0;
-    const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
-    return isNaN(n) ? 0 : n;
-  };
-  
-  // Parse daily data
-  rawData.slice(2).forEach(row => {
-    if (!row[0] || String(row[0]).includes('Data will')) return;
-    const d = {date: row[0], tot: 0};
-    STORES.forEach(s => {
-      const v = toNum(row[s.idx]);
-      d[s.key] = v;
-      d.tot += v;
-    });
-    if (d.tot > 0) daily.push(d);
-  });
-  
-  // Build monthly
-  daily.forEach(d => {
-    const dateObj = new Date(d.date);
-    const m = dateObj.getMonth();
-    const y = dateObj.getFullYear();
-    let idx = -1;
-    if (y === 2025 && m === 11) idx = 0;
-    else if (y === 2026) idx = m + 1;
-    if (idx >= 0 && idx < months.length) {
-      STORES.forEach(s => monthlyData[s.name][idx] += d[s.key]);
+(async function(){
+  let live=false, stamp=null;
+  try{
+    const res=await fetch('./data.json?v='+Date.now(),{cache:'no-store'});
+    if(res.ok){
+      const j=await res.json();
+      if(j&&Array.isArray(j.data)){ live=__applySheet(DATA,j.data); stamp=j.timestamp||null; }
     }
-  });
-  
-  return {months, monthlyData, daily, STORES};
-}
+  }catch(e){ console.warn('โหลด data.json ไม่สำเร็จ ใช้ข้อมูลสำรองในไฟล์',e); }
+  try{ __render(); }catch(e){ console.error('render error',e); }
+  const el=document.getElementById('updated');
+  if(el&&stamp){
+    const t=new Date(stamp);
+    el.innerHTML='ข้อมูลล่าสุด <b style="color:var(--blush)">'+
+      t.toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'})+'</b>'+
+      (live?'':' <span style="color:var(--bad)">(สำรอง)</span>');
+  }
+})();
 
-function renderDashboard(DATA) {
-  const totalRev = DATA.daily.reduce((a, d) => a + d.tot, 0);
-  
-  // KPIs
-  document.getElementById('updated').innerHTML = `<b style="color:var(--blush)">${new Date().toLocaleString('th-TH')}</b>`;
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi hero">
-      <div class="klabel">ยอดรวม · ทั้งงวด</div>
-      <div class="kval"><span class="baht">฿</span>${(totalRev/1e6).toFixed(2)}M</div>
-      <div class="ksub">${DATA.daily.length} วัน · 5 สาขา</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">เฉลี่ยต่อวัน</div>
-      <div class="kval"><span class="baht">฿</span>${(totalRev/DATA.daily.length/1000).toFixed(0)}K</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Max Day</div>
-      <div class="kval"><span class="baht">฿</span>${(Math.max(...DATA.daily.map(d=>d.tot))/1000).toFixed(0)}K</div>
-    </div>
-    <div class="kpi">
-      <div class="klabel">Min Day</div>
-      <div class="kval"><span class="baht">฿</span>${(Math.min(...DATA.daily.filter(d=>d.tot>0).map(d=>d.tot))/1000).toFixed(0)}K</div>
+function __render(){
+const STORES = [
+{key:'lad', name:'Central Ladprao', short:'Ladprao',  color:'#D8B34E'},
+{key:'par', name:'Siam Paragon',    short:'Paragon',  color:'#9B3A52'},
+{key:'cw',  name:'Central World',   short:'CentralWorld', color:'#5FB28A'},
+{key:'pin', name:'Central Pinklao', short:'Pinklao',  color:'#D96A78'},
+{key:'emp', name:'Emporium',        short:'Emporium', color:'#6FA8C7'},
+];
+const IDX={lad:1,pin:2,par:3,cw:4,emp:5,tot:6};
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const fmtK=n=>n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(0)+'k':Math.round(n);
+const baht=s=>`<span class="baht">฿</span>${s}`;
+const daily = DATA.daily.map(r=>({date:r[0],lad:r[1],pin:r[2],par:r[3],cw:r[4],emp:r[5],tot:r[6]}));
+const withSales = daily.filter(r=>r.tot>0);
+const last = withSales[withSales.length-1];          
+const lastFull = withSales[withSales.length-2];      
+const prevFull = withSales[withSales.length-3];
+const niceDate=(mdY)=>{const[m,d,y]=mdY.split('/').map(Number);
+const TH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+return `${d} ${TH[m-1]} ${y+543}`;};
+document.getElementById('updated').innerHTML =
+`อัปเดตล่าสุด <b style="color:var(--blush)">${niceDate(last.date)}</b> · 113 ก.ค. 2569`;
+const months=DATA.months, M=DATA.monthly;
+const storeTotal={}; STORES.forEach(s=>storeTotal[s.name]=M[s.name].reduce((a,b)=>a+b,0));
+const periodTotal=Object.values(storeTotal).reduce((a,b)=>a+b,0);
+const juneIdx=6; 
+const juneMTD=daily.filter(r=>r.date.startsWith('06/')).reduce((a,r)=>a+r.tot,0);
+const mayTot=Object.values(M).reduce((a,v)=>a+v[juneIdx-1],0);
+const juneTot=Object.values(M).reduce((a,v)=>a+v[juneIdx],0);
+const momPct=((juneTot-mayTot)/mayTot*100);
+const topStore=Object.entries(storeTotal).sort((a,b)=>b[1]-a[1])[0];
+const dayDelta=((lastFull.tot-prevFull.tot)/prevFull.tot*100);
+const juneFull=daily.filter(r=>r.date.startsWith('06/')&&r.tot>0);
+const juneAvg=juneMTD/juneFull.length;
+document.getElementById('sig-lead').textContent =
+`Paragon ดีดกลับแรงในเดือน มิ.ย. — ฿${fmt(M['Siam Paragon'][juneIdx])}`;
+document.getElementById('sig-desc').innerHTML =
+`สาขาเรือธงทำยอดเดือน มิ.ย. <b>สูงสุดของทั้งงวด</b> (+${(((M['Siam Paragon'][juneIdx]-M['Siam Paragon'][juneIdx-1])/M['Siam Paragon'][juneIdx-1])*100).toFixed(0)}% จาก พ.ค.) ดันยอดรวมเดือน มิ.ย. แตะ ฿${fmt(juneTot)} โฟกัส: ต่อยอดโมเมนตัมด้วย cross-sell ที่ Paragon`;
+document.getElementById('risk-lead').textContent =
+`Pinklao ทรุดต่อเนื่อง — เหลือ ฿${fmt(M['Central Pinklao'][juneIdx])}/เดือน`;
+document.getElementById('risk-desc').innerHTML =
+`ยอด Pinklao ลดจาก ฿${fmt(M['Central Pinklao'][0])} (ธ.ค.) เหลือ ฿${fmt(M['Central Pinklao'][juneIdx])} (มิ.ย.) <b>หดราว ${Math.round((1-M['Central Pinklao'][juneIdx]/M['Central Pinklao'][0])*100)}%</b> และมีหลายวันที่ยอด = 0 ควรตรวจ traffic + สต็อกหน้าร้าน`;
+const kpis=[
+{hero:true,label:'ยอดขายล่าสุด (วันเต็มล่าสุด)',
+val:baht(fmt(lastFull.tot)),
+sub:`${niceDate(lastFull.date)} <span class="chip ${dayDelta>=0?'up':'down'}">${dayDelta>=0?'▲':'▼'} ${Math.abs(dayDelta).toFixed(0)}%</span> vs วันก่อน`},
+{label:'ยอดสะสมเดือน มิ.ย. (MTD)',
+val:baht(fmt(juneMTD)),
+sub:`เฉลี่ย ฿${fmt(juneAvg)}/วัน · <span class="chip ${momPct>=0?'up':'down'}">${momPct>=0?'▲':'▼'} ${Math.abs(momPct).toFixed(0)}%</span> MoM`},
+{label:'ยอดรวมทั้งงวด (7 เดือน)',
+val:baht(fmtK(periodTotal)),
+sub:`฿${fmt(periodTotal)} · ธ.ค. 25 – ก.ค. 26 (MTD)`},
+{label:'สาขาทำยอดสูงสุด',
+val:topStore[0].replace('Siam ','').replace('Central ',''),
+sub:`฿${fmt(topStore[1])} · ${(topStore[1]/periodTotal*100).toFixed(0)}% ของยอดรวม`},
+];
+document.getElementById('kpis').innerHTML = kpis.map(k=>`
+<div class="kpi ${k.hero?'hero':''}">
+<div class="klabel">${k.label}</div>
+<div class="kval">${k.val}</div>
+<div class="ksub">${k.sub}</div>
+</div>`).join('');
+const lr = STORES.filter(s=>lastFull[s.key]>0).sort((a,b)=>lastFull[b.key]-lastFull[a.key]);
+document.getElementById('latest').innerHTML = `
+<div class="lt"><span class="tag">◆ ออเดอร์ / ยอดขายล่าสุด</span>
+<span class="lbadge">NEWEST</span></div>
+<div class="ldate">${niceDate(lastFull.date)} · วันทำการเต็มล่าสุด</div>
+<div class="lbig">${baht(fmt(lastFull.tot))}</div>
+${lr.map(s=>`<div class="lrow"><span>${s.short}</span><span>฿${fmt(lastFull[s.key])}</span></div>`).join('')}
+<div class="lnote">↳ ข้อมูล ${niceDate(last.date)} (วันนี้) กำลังทยอยเข้า — ขณะนี้ ฿${fmt(last.tot)} จาก Emporium · ระบบ refresh แบบ D-1 เที่ยงของทุกวัน</div>`;
+Chart.defaults.font.family="'Inter Tight',sans-serif";
+Chart.defaults.color='#B79AA2';
+const GRID='rgba(255,255,255,.05)';
+const TT={backgroundColor:'#241319',borderColor:'#4A2A34',borderWidth:1,titleColor:'#FAF4F0',
+bodyColor:'#F0DFE3',padding:11,cornerRadius:9,titleFont:{family:"'Fraunces',serif",size:13},
+bodyFont:{family:"'Space Grotesk'",size:12},displayColors:true,boxPadding:4,
+callbacks:{label:c=>` ${c.dataset.label}: ฿${fmt(c.parsed.y??c.parsed)}`}};
+const monthLabels=months.map(m=>{const[mo,y]=m.split(' ');
+const map={December:'ธ.ค.',January:'ม.ค.',February:'ก.พ.',March:'มี.ค.',April:'เม.ย.',May:'พ.ค.',June:'มิ.ย.',July:'ก.ค.'};
+return map[mo]+' '+String(+y%100);});
+let monthlyChart;
+function buildMonthly(hidden={}){
+const ctx=document.getElementById('monthly');
+const ds=STORES.map(s=>{
+const c=document.createElement('canvas').getContext('2d');
+const g=c.createLinearGradient(0,0,0,300);
+return {label:s.short,data:M[s.name].slice(0,months.length),borderColor:s.color,
+backgroundColor:s.color+'22',tension:.38,borderWidth:2.4,pointRadius:3,
+pointBackgroundColor:s.color,pointBorderColor:'#160C10',pointBorderWidth:1.5,
+pointHoverRadius:6,hidden:!!hidden[s.key],fill:false};
+});
+if(monthlyChart)monthlyChart.destroy();
+monthlyChart=new Chart(ctx,{type:'line',data:{labels:monthLabels,datasets:ds},
+options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:TT},
+scales:{x:{grid:{display:false},border:{display:false}},
+y:{grid:{color:GRID},border:{display:false},ticks:{callback:v=>'฿'+fmtK(v)}}}}});
+}
+buildMonthly();
+const hidden={};
+document.getElementById('legend').innerHTML=STORES.map((s,i)=>
+`<span class="pill" data-i="${i}" data-k="${s.key}"><span class="sw" style="background:${s.color}"></span>${s.short}</span>`).join('');
+document.querySelectorAll('#legend .pill').forEach(p=>{
+p.onclick=()=>{const k=p.dataset.k;hidden[k]=!hidden[k];p.classList.toggle('off',hidden[k]);buildMonthly(hidden);};
+});
+const sCtx=document.getElementById('share');
+new Chart(sCtx,{type:'doughnut',
+data:{labels:STORES.map(s=>s.short),
+datasets:[{data:STORES.map(s=>storeTotal[s.name]),
+backgroundColor:STORES.map(s=>s.color),borderColor:'#1E1015',borderWidth:3,hoverOffset:8}]},
+options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+plugins:{legend:{position:'bottom',labels:{boxWidth:9,boxHeight:9,padding:11,font:{size:11.5}}},
+tooltip:{...TT,callbacks:{label:c=>` ${c.label}: ฿${fmt(c.parsed)} (${(c.parsed/periodTotal*100).toFixed(1)}%)`}}}},
+plugins:[{id:'ctr',afterDraw(ch){const{ctx,chartArea:{left,right,top,bottom}}=ch;
+ctx.save();const x=(left+right)/2,y=(top+bottom)/2;
+ctx.textAlign='center';ctx.fillStyle='#FAF4F0';ctx.font="600 19px 'Space Grotesk'";
+ctx.fillText('฿'+fmtK(periodTotal),x,y-2);
+ctx.fillStyle='#8A6F77';ctx.font="600 10px 'Inter Tight'";
+ctx.fillText('ยอดรวมทั้งงวด',x,y+15);ctx.restore();}}]});
+const GROUPS = [
+{key:'mall',    name:'The Mall', cls:'mall',    color:'#D8B34E', stores:['par','emp']},
+{key:'central', name:'Central',  cls:'central', color:'#9B3A52', stores:['lad','cw','pin']},
+];
+const groupTotal = {};
+GROUPS.forEach(g=>{
+groupTotal[g.key] = g.stores.reduce((a,k)=>{
+const storeName = STORES.find(s=>s.key===k).name;
+return a + storeTotal[storeName];
+},0);
+});
+const groupGrand = Object.values(groupTotal).reduce((a,b)=>a+b,0);
+const groupMTD = {};
+GROUPS.forEach(g=>{
+groupMTD[g.key] = daily.filter(r=>r.date.startsWith('06/')).reduce((a,r)=>a+g.stores.reduce((b,k)=>b+r[k],0),0);
+});
+const gCtx = document.getElementById('groupShare');
+new Chart(gCtx,{type:'pie',
+data:{labels:GROUPS.map(g=>g.name),
+datasets:[{data:GROUPS.map(g=>groupTotal[g.key]),
+backgroundColor:GROUPS.map(g=>g.color),borderColor:'#1E1015',borderWidth:3,hoverOffset:8}]},
+options:{responsive:true,maintainAspectRatio:false,
+plugins:{legend:{position:'bottom',labels:{boxWidth:9,boxHeight:9,padding:11,font:{size:11.5}}},
+tooltip:{...TT,callbacks:{label:c=>` ${c.label}: ฿${fmt(c.parsed)} (${(c.parsed/groupGrand*100).toFixed(1)}%)`}}}}});
+document.getElementById('grpStats').innerHTML = GROUPS.map(g=>{
+const pct = (groupTotal[g.key]/groupGrand*100).toFixed(1);
+const rows = g.stores.map(k=>{
+const s = STORES.find(x=>x.key===k);
+return `<div class="grp-row"><span>${s.short}</span><span>฿${fmt(storeTotal[s.name])}</span></div>`;
+}).join('');
+return `<div class="grp-card ${g.cls}">
+<div class="grp-name">${g.name} <span class="grp-pct">${pct}%</span></div>
+<div class="grp-total"><span class="baht">฿</span>${fmt(groupTotal[g.key])}</div>
+<div class="grp-mtd">ยอด MTD (มิ.ย. 26) <b>฿${fmt(groupMTD[g.key])}</b></div>
+<div class="grp-stores">${rows}</div>
+</div>`;
+}).join('');
+const medalEmoji = ['🥇','🥈','🥉'];
+const ranking = STORES.map(s=>({...s,total:storeTotal[s.name]})).sort((a,b)=>b.total-a.total).slice(0,3);
+document.getElementById('rankList').innerHTML = ranking.map((s,i)=>`
+<div class="rank-item r${i+1}">
+<div class="rank-badge">${i+1}</div>
+<div class="rank-info">
+<div class="rank-name">${medalEmoji[i]} ${s.name}</div>
+<div class="rank-sub">${(s.total/periodTotal*100).toFixed(1)}% ของยอดรวมทั้งหมด</div>
+</div>
+<div class="rank-val">
+<div class="rv-amt"><span class="baht">฿</span>${fmt(s.total)}</div>
+</div>
+</div>`).join('');
+const BS = DATA.bestseller;
+const BRANCH_LABELS = {par:'Siam Paragon', cw:'Central World', lad:'Central Ladprao', pin:'Pinklao', emp:'Emporium'};
+const bsMonthShortTH = {'01':'ม.ค.','02':'ก.พ.','03':'มี.ค.','04':'เม.ย.','05':'พ.ค.','06':'มิ.ย.',
+'07':'ก.ค.','08':'ส.ค.','09':'ก.ย.','10':'ต.ค.','11':'พ.ย.','12':'ธ.ค.'};
+function bsMonthLabel(ym){
+const [y,m] = ym.split('-');
+return `${bsMonthShortTH[m]} ${String(+y%100).padStart(2,'0')}`;
+}
+let bsAxisMode = 'all'; 
+let bsBranchKey = 'par';
+let bsMonthKey = 'all'; 
+document.getElementById('bsAxis').innerHTML = `
+<span class="bs-axis-pill active" data-axis="all">All Store</span>
+<span class="bs-axis-pill" data-axis="branch">Per Branch</span>`;
+document.getElementById('bsBranchTabs').innerHTML = STORES.map(s=>
+`<span class="bs-branch-tab ${s.key==='par'?'active':''}" data-k="${s.key}">${s.short}</span>`).join('');
+document.getElementById('bsMonthPicker').innerHTML = ['all', ...BS.months].map(m=>
+`<span class="bs-mpill ${m==='all'?'active':''}" data-m="${m}">${m==='all'?'All Time':bsMonthLabel(m)}</span>`).join('');
+function renderBestSeller(){
+let list, subText;
+const monthTxt = bsMonthKey==='all' ? 'ทั้งหมด (All Time)' : bsMonthLabel(bsMonthKey);
+if(bsAxisMode==='all'){
+list = bsMonthKey==='all' ? BS.all_store_alltime : (BS.all_store_by_month[bsMonthKey]||[]);
+subText = `จัดอันดับจากจำนวนชิ้นที่ขายได้ทุกสาขารวมกัน · ${monthTxt} (รวมทุกไซส์)`;
+document.getElementById('bsBranchTabs').style.display='none';
+} else {
+list = bsMonthKey==='all' ? BS.branch_alltime[bsBranchKey] : (BS.branch_by_month[bsBranchKey][bsMonthKey]||[]);
+subText = `จัดอันดับจากจำนวนชิ้นที่ขายได้ที่ ${BRANCH_LABELS[bsBranchKey]} · ${monthTxt} (รวมทุกไซส์)`;
+document.getElementById('bsBranchTabs').style.display='flex';
+}
+document.getElementById('bsSub').textContent = subText;
+if(!list || list.length===0){
+document.getElementById('bsList').innerHTML = `<div style="padding:18px;text-align:center;color:var(--muted2);font-size:12.5px">ไม่มีข้อมูลสินค้าขายในช่วงที่เลือก</div>`;
+return;
+}
+const maxQty = Math.max(...list.map(x=>x.qty));
+document.getElementById('bsList').innerHTML = list.map((item,i)=>`
+<div class="bs-item ${i===0?'b1':''}">
+<div class="bs-rank">${i+1}</div>
+<div class="bs-info">
+<div class="bs-name">${item.product}</div>
+<div class="bs-size">ไซส์ขายดีสุด: ${item.top_size||'-'}</div>
+<div class="bs-bar"><i style="width:${(item.qty/maxQty*100)}%"></i></div>
+</div>
+<div class="bs-qty">
+<div class="bq-num">${item.qty}</div>
+<div class="bq-label">ชิ้น</div>
+</div>
+</div>`).join('');
+}
+document.querySelectorAll('.bs-axis-pill').forEach(p=>{
+p.onclick=()=>{
+bsAxisMode = p.dataset.axis;
+document.querySelectorAll('.bs-axis-pill').forEach(x=>x.classList.toggle('active', x===p));
+renderBestSeller();
+};
+});
+document.querySelectorAll('.bs-branch-tab').forEach(p=>{
+p.onclick=()=>{
+bsBranchKey = p.dataset.k;
+document.querySelectorAll('.bs-branch-tab').forEach(x=>x.classList.toggle('active', x===p));
+renderBestSeller();
+};
+});
+document.querySelectorAll('.bs-mpill').forEach(p=>{
+p.onclick=()=>{
+bsMonthKey = p.dataset.m;
+document.querySelectorAll('.bs-mpill').forEach(x=>x.classList.toggle('active', x===p));
+renderBestSeller();
+};
+});
+renderBestSeller();
+const COMPLETE_MONTHS_COUNT = months.length - 1; 
+const monthShortTH = {December:'ธ.ค.',January:'ม.ค.',February:'ก.พ.',March:'มี.ค.',April:'เม.ย.',May:'พ.ค.',June:'มิ.ย.'};
+function monthLabelFor(idx){
+const [mo,y]=months[idx].split(' ');
+return `${monthShortTH[mo]} ${String(+y%100).padStart(2,'0')}`;
+}
+let fmSelected = COMPLETE_MONTHS_COUNT-1; 
+document.getElementById('monthPicker').innerHTML =
+Array.from({length:COMPLETE_MONTHS_COUNT},(_,i)=>
+`<span class="mpill ${i===fmSelected?'active':''}" data-i="${i}">${monthLabelFor(i)}</span>`).join('');
+function renderFullMonth(idx){
+fmSelected=idx;
+document.querySelectorAll('.mpill').forEach(p=>p.classList.toggle('active',+p.dataset.i===idx));
+const thisTotal = Object.values(M).reduce((a,v)=>a+v[idx],0);
+const hasLastMonth = idx>0;
+const lastMonthTotal = hasLastMonth ? Object.values(M).reduce((a,v)=>a+v[idx-1],0) : null;
+const momPctV = hasLastMonth ? ((thisTotal-lastMonthTotal)/lastMonthTotal*100) : null;
+const hasLastYear = false;
+const monthKey = monthKeyOf(idx);
+const daysInMonth = withSales.filter(r=>{
+const parts=r.date.split('/');
+return `${parts[2]}-${parts[0]}` === monthKey;
+}).length;
+const stats = [
+{main:true,label:`ยอดรวม · ${monthLabelFor(idx)}`,
+val:`<span class="baht">฿</span>${fmt(thisTotal)}`,
+cmp:`เต็มเดือน · ${daysInMonth} วันทำการ`},
+{label:'เทียบเดือนก่อนหน้า (MoM)',
+val: hasLastMonth ? `${momPctV>=0?'▲':'▼'} ${Math.abs(momPctV).toFixed(1)}%` : '—',
+cmp: hasLastMonth
+? `${monthLabelFor(idx-1)}: ฿${fmt(lastMonthTotal)}`
+: `<span class="fm-na">ไม่มีเดือนก่อนหน้าในระบบ</span>`,
+cls: hasLastMonth ? (momPctV>=0?'up':'down') : ''},
+{label:'เทียบช่วงเดียวกันปีก่อน (YoY)',
+val: hasLastYear ? '—' : 'N/A',
+cmp: `<span class="fm-na">ไม่มีข้อมูลปี ${ (+months[idx].split(' ')[1]) -1 } ในชีตนี้</span>`,
+cls:''},
+];
+document.getElementById('fmStats').innerHTML = stats.map(s=>`
+<div class="fm-stat ${s.main?'fm-main':''}">
+<div class="fm-label">${s.label}</div>
+<div class="fm-val ${s.cls==='up'?'':''}" style="${s.cls==='up'?'color:var(--good)':s.cls==='down'?'color:var(--bad)':''}">${s.val}</div>
+<div class="fm-cmp">${s.cmp}</div>
+</div>`).join('');
+const maxVal = Math.max(...STORES.map(s=>M[s.name][idx]));
+document.getElementById('fmStores').innerHTML = STORES.map(s=>{
+const v=M[s.name][idx];
+const pct = maxVal>0 ? (v/maxVal*100) : 0;
+return `<div class="fm-store">
+<div class="fs-name">${s.short}</div>
+<div class="fs-val">฿${fmtK(v)}</div>
+<div class="fs-bar"><i style="width:${pct}%;background:${s.color}"></i></div>
+</div>`;
+}).join('');
+}
+function monthKeyOf(idx){
+const map={December:'12',January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',July:'07'};
+const [mo,y]=months[idx].split(' ');
+return `${y}-${map[mo]}`;
+}
+document.querySelectorAll('.mpill').forEach(p=>p.onclick=()=>renderFullMonth(+p.dataset.i));
+renderFullMonth(fmSelected);
+let dailyChart, curRange=60;
+function buildDaily(n){
+curRange=n;
+const rows=withSales.slice(-n);
+document.getElementById('dailysub').textContent=`${n} วันทำการล่าสุด · ฿${fmt(rows.reduce((a,r)=>a+r.tot,0))} รวม`;
+const ctx=document.getElementById('daily');
+const g=ctx.getContext('2d').createLinearGradient(0,0,0,300);
+g.addColorStop(0,'rgba(184,146,46,.40)');g.addColorStop(1,'rgba(118,29,53,.02)');
+const lbls=rows.map(r=>{const[m,d]=r.date.split('/');return +d+'/'+ +m;});
+if(dailyChart)dailyChart.destroy();
+dailyChart=new Chart(ctx,{type:'line',
+data:{labels:lbls,datasets:[{label:'ยอดรวมรายวัน',data:rows.map(r=>r.tot),
+borderColor:'#E4C76A',backgroundColor:g,fill:true,tension:.32,borderWidth:2.2,
+pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#E4C76A',pointHoverBorderColor:'#160C10'}]},
+options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:TT},
+scales:{x:{grid:{display:false},border:{display:false},
+ticks:{maxTicksLimit:n>40?10:14,autoSkip:true,font:{size:10}}},
+y:{grid:{color:GRID},border:{display:false},ticks:{callback:v=>'฿'+fmtK(v)}}}}});
+}
+document.getElementById('rangePills').innerHTML=
+[30,60,90].map(n=>`<span class="pill rp" data-n="${n}">${n} วัน</span>`).join('');
+function setRange(n){buildDaily(n);
+document.querySelectorAll('.rp').forEach(p=>p.classList.toggle('off',+p.dataset.n!==n));}
+document.querySelectorAll('.rp').forEach(p=>p.onclick=()=>setRange(+p.dataset.n));
+setRange(60);
+const t14=withSales.slice(-14).reverse();
+let html='<thead><tr><th>วันที่</th><th>Ladprao</th><th>Pinklao</th><th>Paragon</th><th>C.World</th><th>Emporium</th><th>รวม</th></tr></thead><tbody>';
+t14.forEach((r,i)=>{
+const newest=(i===0);
+const cell=v=>v>0?`<td>${fmt(v)}</td>`:`<td class="zero">–</td>`;
+html+=`<tr class="${newest?'newest':''}"><td>${niceDate(r.date)}${newest?'<span class="tbadge">ล่าสุด</span>':''}</td>
+${cell(r.lad)}${cell(r.pin)}${cell(r.par)}${cell(r.cw)}${cell(r.emp)}
+<td class="tot">${fmt(r.tot)}</td></tr>`;
+});
+html+='</tbody>';
+document.getElementById('tbl').innerHTML=html;
+const insights=[
+{cls:'win',k:'Win · Paragon',
+h:`Paragon ครองส่วนแบ่งสูงสุด ${(storeTotal['Siam Paragon']/periodTotal*100).toFixed(0)}%`,
+p:`ยอดรวม <b>฿${fmt(storeTotal['Siam Paragon'])}</b> เป็นสาขาเดียวที่เดือน มิ.ย. ทำ New High (฿${fmt(M['Siam Paragon'][juneIdx])}) สวนทางสาขาอื่น`,
+r:'ใช้ Paragon เป็น flagship ทดสอบ product-line extension ก่อนขยายสาขาอื่น'},
+{cls:'risk',k:'Risk · Pinklao',
+h:`Pinklao หดต่อเนื่อง เหลือ ${(storeTotal['Central Pinklao']/periodTotal*100).toFixed(0)}% ของยอดรวม`,
+p:`ลดจาก ฿${fmt(M['Central Pinklao'][0])} เหลือ ฿${fmt(M['Central Pinklao'][juneIdx])} ใน 7 เดือน และมีหลายวันยอด = <b>0</b> ตรงกับ seasonal risk ที่เคยติดธงไว้`,
+r:'ตรวจ footfall + visual merchandising หน้าร้าน และพิจารณา local activation'},
+{cls:'',k:'Watch · Emporium',
+h:`สาขาใหม่ Emporium คุมสัดส่วน ${(storeTotal['Emporium']/periodTotal*100).toFixed(0)}% ตั้งแต่เปิด เม.ย.`,
+p:`3 เดือนแรกทำ ฿${fmt(M['Emporium'][4])} → ฿${fmt(M['Emporium'][5])} → ฿${fmt(M['Emporium'][juneIdx])} แนวโน้ม<b>ค่อย ๆ ชะลอ</b> หลังกระแสเปิดร้าน`,
+r:'เร่งสร้าง repeat-purchase ด้วย CRM/loyalty ช่วง 90 วันแรกของสาขา'},
+];
+document.getElementById('insights').innerHTML=insights.map(o=>`
+<div class="icard ${o.cls}">
+<div class="ik">${o.k}</div>
+<div class="ih">${o.h}</div>
+<div class="ip">${o.p}</div>
+<div class="reco">${o.r}</div>
+</div>`).join('');
+
+
+
+
+// ---- SELLER PERFORMANCE ----
+(function(){
+  const SP = DATA.sellers;
+  if(!SP) return;
+  const BR = [
+    {k:'par',label:'Paragon',   color:'#9B3A52'},
+    {k:'lad',label:'Ladprao',   color:'#D8B34E'},
+    {k:'cw', label:'CentralWorld',color:'#5FB28A'},
+    {k:'emp',label:'Emporium',  color:'#6FA8C7'},
+    {k:'pin',label:'Pinklao',   color:'#D96A78'},
+  ];
+  const thMon = {'01':'ม.ค.','02':'ก.พ.','03':'มี.ค.','04':'เม.ย.','05':'พ.ค.','06':'มิ.ย.',
+                 '07':'ก.ค.','08':'ส.ค.','09':'ก.ย.','10':'ต.ค.','11':'พ.ย.','12':'ธ.ค.'};
+  const mLabel = ym => { const [y,m]=ym.split('-'); return thMon[m]+' '+String((+y+543)%100).padStart(2,'0'); };
+
+  let spBk = 'par', spMk = 'ALL';
+
+  document.getElementById('spBranch').innerHTML = `<span class="sp-pill allbr" data-b="ALLBR">🌐 All Branches</span>` +
+    BR.map(b=>`<span class="sp-pill ${b.k===spBk?'active':''}" data-b="${b.k}">${b.label}</span>`).join('');
+  document.getElementById('spMonth').innerHTML =
+    [`<span class="sp-pill active" data-m="ALL">All Time</span>`]
+    .concat(SP.months.slice().reverse().map(m=>`<span class="sp-pill" data-m="${m}">${mLabel(m)}</span>`)).join('');
+
+  const SHORTBK={par:'Paragon',lad:'Ladprao',cw:'CentralWorld',emp:'Emporium',pin:'Pinklao'};
+function render(){
+    const isAll = spBk==='ALLBR';
+    const rows = isAll
+      ? (spMk==='ALL' ? SP.ALLBRANCH : (SP[spMk+'_ALLBRANCH']||[]))
+      : ((SP[spMk] && SP[spMk][spBk]) ? SP[spMk][spBk] : []);
+    const br = isAll ? {label:'All Branches', color:'var(--gold)'} : BR.find(b=>b.k===spBk);
+    const periodTxt = spMk==='ALL' ? 'ทั้งหมด (All Time)' : mLabel(spMk);
+
+    if(!rows.length){
+      document.getElementById('spSum').innerHTML = '';
+      document.getElementById('spTable').innerHTML =
+        `<tbody><tr><td class="sp-empty" colspan="${isAll?7:9}">ไม่มีข้อมูลพนักงานขายของ ${br.label} ในช่วง ${periodTxt}</td></tr></tbody>`;
+      document.getElementById('spNote').innerHTML =
+        `<b>หมายเหตุ:</b> ไม่มีข้อมูลชื่อผู้ขายในชีทช่วงที่เลือก จึงยังวิเคราะห์ไม่ได้`;
+      return;
+    }
+
+    const totRev = rows.reduce((a,r)=>a+r.rev,0);
+    const totBills = rows.reduce((a,r)=>a+r.bills,0);
+    const avgBill = totBills ? totRev/totBills : 0;
+    const top = rows[0];
+    const multiBranchCount = isAll ? rows.filter(r=>r.n_branches>1).length : 0;
+
+    document.getElementById('spSum').innerHTML = `
+      <div class="sp-scard"><div class="ss-l">พนักงานที่มีข้อมูล</div>
+        <div class="ss-v">${rows.length}</div>
+        <div class="ss-s">${isAll? multiBranchCount+' คนขายมากกว่า 1 สาขา' : periodTxt}</div></div>
+      <div class="sp-scard"><div class="ss-l">ยอดที่มีส่วนร่วมรวม</div>
+        <div class="ss-v"><span class="baht">฿</span>${fmtK(Math.round(totRev))}</div>
+        <div class="ss-s">${fmt(totBills)} บิล</div></div>
+      <div class="sp-scard"><div class="ss-l">Avg / Bill เฉลี่ย</div>
+        <div class="ss-v"><span class="baht">฿</span>${fmt(Math.round(avgBill))}</div>
+        <div class="ss-s">ต่อบิล</div></div>
+      <div class="sp-scard" style="border-color:${br.color}">
+        <div class="ss-l">Top Performer</div>
+        <div class="ss-v" style="font-family:'Fraunces',serif;font-size:16px">${top.name}</div>
+        <div class="ss-s">Index ${top.index.toFixed(0)} · ฿${fmtK(Math.round(top.rev))}${isAll?' · '+top.n_branches+' สาขา':''}</div></div>
+    `;
+
+    let h;
+    if(isAll){
+      h = `<thead><tr>
+        <th style="width:44px">#</th><th>พนักงาน</th>
+        <th>ยอดรวมทุกสาขา</th><th>บิล</th><th>วันทำงาน</th>
+        <th>฿/วัน</th><th>Index</th>
+      </tr></thead><tbody>`;
+      rows.forEach((r,i)=>{
+        const cls = i===0?'sp-top1':i===1?'sp-top2':i===2?'sp-top3':'';
+        const c = r.index>=130?'var(--good)':r.index>=100?'var(--gold-l)':r.index>=70?'var(--warn)':'var(--bad)';
+        const w = Math.max(2, Math.min(r.index/2.5, 100));
+        const chips = r.branches.map(b=>`<span class="sp-bchip">${SHORTBK[b.bk]||b.bk}<b>฿${fmtK(Math.round(b.rev))}</b></span>`).join('');
+        h += `<tr class="${cls}">
+          <td style="text-align:left"><span class="sp-rk">${i+1}</span></td>
+          <td class="sp-namecell">
+            <span>${r.name}${r.n_branches>1?` <span style="color:var(--gold-l);font-size:10px">🌐×${r.n_branches}</span>`:''}</span>
+            <span class="sp-branchchips">${chips}</span>
+          </td>
+          <td><span style="color:var(--gold-l)">฿</span>${fmt(Math.round(r.rev))}</td>
+          <td>${fmt(r.bills)}</td>
+          <td>${r.days}</td>
+          <td>฿${fmt(Math.round(r.rev_day))}</td>
+          <td><span class="sp-idx">
+            <span class="sp-idxbar"><i style="width:${w}%;background:${c}"></i></span>
+            <span class="sp-idxnum" style="color:${c}">${r.index.toFixed(0)}</span></span></td>
+        </tr>`;
+      });
+    } else {
+      h = `<thead><tr>
+        <th style="width:44px">#</th><th>พนักงาน</th>
+        <th>ยอดที่มีส่วนร่วม</th><th>บิล</th><th>วันทำงาน</th>
+        <th>฿/บิล</th><th>฿/วัน</th><th>Index</th><th>% สาขา</th>
+      </tr></thead><tbody>`;
+      rows.forEach((r,i)=>{
+        const cls = i===0?'sp-top1':i===1?'sp-top2':i===2?'sp-top3':'';
+        const c = r.index>=130?'var(--good)':r.index>=100?'var(--gold-l)':r.index>=70?'var(--warn)':'var(--bad)';
+        const w = Math.max(2, Math.min(r.index/2, 100));
+        h += `<tr class="${cls}">
+          <td style="text-align:left"><span class="sp-rk">${i+1}</span></td>
+          <td>${r.name}</td>
+          <td><span style="color:var(--gold-l)">฿</span>${fmt(Math.round(r.rev))}</td>
+          <td>${fmt(r.bills)}</td>
+          <td>${r.days}</td>
+          <td>฿${fmt(Math.round(r.avg_bill))}</td>
+          <td>฿${fmt(Math.round(r.rev_day))}</td>
+          <td><span class="sp-idx">
+            <span class="sp-idxbar"><i style="width:${w}%;background:${c}"></i></span>
+            <span class="sp-idxnum" style="color:${c}">${r.index.toFixed(0)}</span></span></td>
+          <td>${r.share.toFixed(1)}%</td>
+        </tr>`;
+      });
+    }
+    h += '</tbody>';
+    document.getElementById('spTable').innerHTML = h;
+
+    document.getElementById('spNote').innerHTML = isAll
+      ? `<b>มุมมองนี้:</b> รวมยอดของพนักงานคนเดียวกันข้ามทุกสาขาที่ไปช่วยขาย (จับคู่ชื่อแบบไม่สนตัวพิมพ์เล็ก-ใหญ่) ` +
+        `🌐 = ทำงานมากกว่า 1 สาขา · <b>Index</b> คำนวณเทียบค่าเฉลี่ย ฿/วันของ<b>พนักงานทั้งหมดทุกสาขารวมกัน</b> จึงต่างจาก Index ในมุมมองรายสาขา<br>` +
+        `<b>วิธีคำนวณยอด:</b> เหมือนมุมมองรายสาขา — กระจายยอดจริงรายวันตามสัดส่วนมูลค่าสินค้า และให้เครดิตเต็ม 100% เมื่อขายคู่`
+      : `<b>วิธีคำนวณ:</b> ยอดขายจริงรายวันของสาขา (Summary_Daily) ถูกกระจายลงแต่ละบิลตามสัดส่วนมูลค่าสินค้า · ` +
+        `บิลที่ขายเป็นคู่ (เช่น "Oat/Aom") ให้เครดิต <b>เต็ม 100% ทั้งสองคน</b> ยอดรวมของพนักงานจึงสูงกว่ายอดสาขาจริง — ` +
+        `อ่านเป็น "ยอดที่มีส่วนร่วม" ไม่ใช่ยอดบัญชี<br>` +
+        `<b>Index (คุมความต่างของขนาดสาขา):</b> ฿/วันทำงานของพนักงาน ÷ ค่าเฉลี่ย ฿/วันของสาขานั้น × 100 · ` +
+        `<b>100 = เท่าค่าเฉลี่ยสาขา</b> ใช้เทียบข้ามสาขาได้ เพราะหักผลของ traffic และจำนวนวันทำงานออกแล้ว`;
+  }
+
+  document.querySelectorAll('#spBranch .sp-pill').forEach(p=>{
+    p.onclick=()=>{ spBk=p.dataset.b;
+      document.querySelectorAll('#spBranch .sp-pill').forEach(x=>x.classList.toggle('active',x===p)); render(); };
+  });
+  document.querySelectorAll('#spMonth .sp-pill').forEach(p=>{
+    p.onclick=()=>{ spMk=p.dataset.m;
+      document.querySelectorAll('#spMonth .sp-pill').forEach(x=>x.classList.toggle('active',x===p)); render(); };
+  });
+  render();
+})();
+
+// ---- AVG PER BILL ----
+(function(){
+  const B = DATA.bills;
+  if(!B) return;
+
+  const lastRow = withSales[withSales.length-1];
+  const [lm,,ly] = lastRow.date.split('/').map(Number);
+  const monthNames=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const curMonthLabel = monthNames[lm]+' '+(ly+543);
+
+  const storeOrder = ['par','lad','emp','cw','pin'];
+  let billsMode = 'alltime';
+
+  function renderBills(){
+    const isAllTime = billsMode==='alltime';
+    const suffix = isAllTime ? '_alltime' : '_jul';
+
+    // All-store totals
+    const totalBills = storeOrder.reduce((a,k)=>a+(B[k]?B[k]['bills'+suffix]:0),0);
+    const totalRev   = storeOrder.reduce((a,k)=>a+(B[k]?B[k]['rev'+suffix]:0),0);
+    const avgAll     = totalBills>0 ? totalRev/totalBills : 0;
+
+    document.getElementById('billsOverview').innerHTML = `
+      <div class="bo-eye">🧾 ${isAllTime?'ทั้งหมด (All Time)':'MTD — '+curMonthLabel}</div>
+      <div class="bo-label">ภาพรวมทุกสาขา</div>
+      <div class="bo-tabs">
+        <div class="bo-tab active" style="border-color:var(--gold)">
+          <div class="bt-label">Avg / Bill</div>
+          <div class="bt-num"><span>฿</span>${fmt(Math.round(avgAll))}</div>
+          <div class="bt-sub">${fmt(totalBills)} bills รวม</div>
+        </div>
+        <div class="bo-tab">
+          <div class="bt-label">Total Revenue</div>
+          <div class="bt-num" style="font-size:clamp(18px,2.8vw,26px);margin-top:8px"><span>฿</span>${fmtK(Math.round(totalRev))}</div>
+          <div class="bt-sub">${fmt(totalBills)} transactions</div>
+        </div>
+      </div>
+    `;
+
+    const maxAvg = Math.max(...storeOrder.map(k=>B[k]?B[k]['avg'+suffix]:0));
+    document.getElementById('billsTable').innerHTML = storeOrder.map(k=>{
+      const s = STORES.find(x=>x.key===k);
+      const bd = B[k];
+      if(!bd) return '';
+      const avg   = bd['avg'+suffix];
+      const bills = bd['bills'+suffix];
+      const rev   = bd['rev'+suffix];
+      if(bills===0) return `<div class="bills-row">
+        <div class="br-dot" style="background:${s.color}"></div>
+        <div class="br-name">${s.short}</div>
+        <div class="bills-col"><div class="bc-val" style="color:var(--muted2)">—</div><div class="bc-label">ไม่มีข้อมูล</div></div>
+        <div class="bills-col"><div class="bc-val" style="color:var(--muted2)">0</div><div class="bc-label">bills</div></div>
+        <div class="bills-col"><div class="bc-val" style="color:var(--muted2)">—</div><div class="bc-label">revenue</div></div>
+      </div>`;
+      const barW = maxAvg>0 ? (avg/maxAvg*100).toFixed(0) : 0;
+      return `<div class="bills-row" style="border-color:${s.color}22">
+        <div class="br-dot" style="background:${s.color}"></div>
+        <div class="br-name">
+          ${s.short}
+          <div style="height:3px;border-radius:2px;background:var(--line2);margin-top:5px;overflow:hidden">
+            <div style="width:${barW}%;height:100%;background:${s.color};border-radius:2px;opacity:.7"></div>
+          </div>
+        </div>
+        <div class="bills-col">
+          <div class="bc-val"><span class="baht">฿</span>${fmt(Math.round(avg))}</div>
+          <div class="bc-label">avg/bill</div>
+        </div>
+        <div class="bills-col">
+          <div class="bc-val">${fmt(bills)}</div>
+          <div class="bc-label">bills</div>
+        </div>
+        <div class="bills-col">
+          <div class="bc-val"><span class="baht">฿</span>${fmtK(Math.round(rev))}</div>
+          <div class="bc-label">revenue</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('.bills-mode-pill').forEach(p=>{
+    p.onclick=()=>{
+      billsMode=p.dataset.bm;
+      document.querySelectorAll('.bills-mode-pill').forEach(x=>x.classList.toggle('active',x===p));
+      renderBills();
+    };
+  });
+  renderBills();
+})();
+
+// ---- ACHIEVEMENT vs TARGET ----
+(function(){
+  const T = DATA.targets && DATA.targets.jul ? DATA.targets.jul :
+    {par:450000,lad:370000,emp:250000,pin:120000,cw:240000,total:1430000};
+
+  const lastRow = withSales[withSales.length-1];
+  const [lm,,ly] = lastRow.date.split('/').map(Number);
+  const mmStr = String(lm).padStart(2,'0');
+  const curRows = daily.filter(r=>r.date.startsWith(mmStr+'/') && r.date.endsWith('/'+ly));
+
+  const monthNames=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const curMonthLabel = monthNames[lm]+' '+(ly+543);
+
+  // Total
+  const totalMTD = curRows.reduce((a,r)=>a+r.tot,0);
+  const totalPct  = totalMTD/T.total*100;
+  const pctColor  = totalPct>=100?'var(--good)':totalPct>=70?'var(--gold-l)':'var(--bad)';
+
+  document.getElementById('achvHero').innerHTML = `
+    <div class="ah-eye">🎯 Achievement · ${curMonthLabel}</div>
+    <div class="ah-label">ยอดรวมทุกสาขา vs เป้าหมาย</div>
+    <div class="ah-pct" style="color:${pctColor}">${totalPct.toFixed(1)}<span>%</span></div>
+    <div class="ah-row"><span>ยอด MTD</span><span>฿${fmt(Math.round(totalMTD))}</span></div>
+    <div class="ah-row"><span>เป้าหมาย</span><span>฿${fmt(T.total)}</span></div>
+    <div class="ah-row"><span>ต้องทำเพิ่ม</span><span style="color:${totalMTD>=T.total?'var(--good)':'var(--warn)'}">
+      ${totalMTD>=T.total?'✓ บรรลุเป้า':'฿'+fmt(Math.round(T.total-totalMTD))}</span></div>
+    <div class="ah-row"><span>วันทำงาน MTD</span><span>${curRows.filter(r=>r.tot>0).length} วัน</span></div>
+  `;
+
+  const branchTargets = [
+    {s:STORES.find(x=>x.key==='par'), tgt:T.par},
+    {s:STORES.find(x=>x.key==='lad'), tgt:T.lad},
+    {s:STORES.find(x=>x.key==='emp'), tgt:T.emp},
+    {s:STORES.find(x=>x.key==='cw'),  tgt:T.cw},
+    {s:STORES.find(x=>x.key==='pin'), tgt:T.pin},
+  ].map(({s,tgt})=>{
+    const mtd = curRows.reduce((a,r)=>a+r[s.key],0);
+    const pct = tgt>0 ? mtd/tgt*100 : 0;
+    return {s,tgt,mtd,pct};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  document.getElementById('achvGrid').innerHTML = branchTargets.map(({s,tgt,mtd,pct})=>{
+    const barPct = Math.min(pct,100);
+    const c = pct>=100?'var(--good)':pct>=70?'var(--gold-l)':pct>=40?'var(--warn)':'var(--bad)';
+    const gap = tgt-mtd;
+    return `<div class="achv-card">
+      <div class="ac-top">
+        <span class="ac-name">${s.name.replace('Central ','')}</span>
+        <span class="ac-pct" style="color:${c}">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="ac-bar-wrap">
+        <div class="ac-bar" style="width:${barPct}%;background:linear-gradient(90deg,${s.color}99,${s.color})"></div>
+      </div>
+      <div class="ac-nums">
+        <span>MTD <b>฿${fmtK(Math.round(mtd))}</b></span>
+        <span>เป้า <b>฿${fmtK(tgt)}</b></span>
+        <span>${gap>0?`ขาด <b style="color:var(--warn)">฿${fmtK(Math.round(gap))}</b>`:'<b style="color:var(--good)">✓ บรรลุ</b>'}</span>
+      </div>
+    </div>`;
+  }).join('');
+})();
+
+// ---- ESTIMATE SALES (current month) ----
+(function(){
+  // Determine current month from last daily row
+  const lastRow = withSales[withSales.length-1];
+  const [lm, ld, ly] = lastRow.date.split('/').map(Number);
+  // Days in current month (approximate: use known month lengths)
+  const daysInMonth = [0,31,28,31,30,31,30,31,31,30,31,30,31];
+  // Adjust Feb for leap year
+  if(lm===2 && ly%4===0) daysInMonth[2]=29;
+  const totalDays = daysInMonth[lm];
+
+  // Filter daily rows for current month
+  const mmStr = String(lm).padStart(2,'0');
+  const curRows = daily.filter(r => r.date.startsWith(mmStr+'/') && r.date.endsWith('/'+ly));
+
+  // All-store
+  const sellingDaysAll = curRows.filter(r=>r.tot>0).length;
+  const mtdAll = curRows.reduce((a,r)=>a+r.tot,0);
+  const estAll = sellingDaysAll>0 ? (mtdAll/sellingDaysAll)*totalDays : 0;
+  const avgDailyAll = sellingDaysAll>0 ? mtdAll/sellingDaysAll : 0;
+  const remainDays = totalDays - ld;
+
+  // Month label
+  const mLabel = niceDate('00/01/'+ly).replace('1 ม.ค.','').trim();
+  const monthNames = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const curMonthLabel = monthNames[lm]+' '+(ly+543);
+
+  document.getElementById('estHero').innerHTML = `
+    <div class="est-eyebrow">📊 Estimate Sales · ${curMonthLabel}</div>
+    <div class="est-label">ประมาณการยอดขายรวมทุกสาขา</div>
+    <div class="est-big">${baht(fmt(Math.round(estAll)))}</div>
+    <div class="est-meta">
+      <div class="est-meta-item">
+        <span class="em-label">ยอด MTD</span>
+        <span class="em-val">฿${fmt(Math.round(mtdAll))}</span>
+      </div>
+      <div class="est-meta-item">
+        <span class="em-label">วันที่ขาย</span>
+        <span class="em-val">${sellingDaysAll} / ${totalDays} วัน</span>
+      </div>
+      <div class="est-meta-item">
+        <span class="em-label">เฉลี่ย/วัน</span>
+        <span class="em-val">฿${fmt(Math.round(avgDailyAll))}</span>
+      </div>
+      <div class="est-meta-item">
+        <span class="em-label">เหลืออีก</span>
+        <span class="em-val">${remainDays} วัน</span>
+      </div>
+      <div class="est-meta-item">
+        <span class="em-label">ความคืบหน้า</span>
+        <span class="em-val">${(ld/totalDays*100).toFixed(0)}% ของเดือน</span>
+      </div>
     </div>
   `;
-  
-  // Signal & Risk
-  const last3 = DATA.daily.slice(-3);
-  const last7 = DATA.daily.slice(-10, -3);
-  const avg3 = last3.reduce((a,d)=>a+d.tot,0)/3;
-  const avg7 = last7.reduce((a,d)=>a+d.tot,0)/7 || avg3;
-  
-  if (avg3 > avg7 * 1.1) {
-    document.getElementById('sig-lead').textContent = '📈 ยอดขายเพิ่มขึ้น';
-    document.getElementById('sig-desc').innerHTML = `ยอดเฉลี่ย 3 วันล่าสุดเพิ่มขึ้น <b>${((avg3/avg7-1)*100).toFixed(0)}%</b>`;
-  }
-  
-  if (DATA.daily[DATA.daily.length-1].tot < avg7 * 0.7) {
-    document.getElementById('risk-lead').textContent = '⚠️ ยอดต่ำกว่าค่าเฉลี่ย';
-    document.getElementById('risk-desc').innerHTML = `<b>วันล่าสุด</b> ต่ำกว่าค่าเฉลี่ยสัปดาห์ ${((1-DATA.daily[DATA.daily.length-1].tot/avg7)*100).toFixed(0)}%`;
-  }
-  
-  // Top 3
-  const ranked = DATA.STORES.map(s => ({
-    name: s.name,
-    tot: DATA.monthlyData[s.name].reduce((a,b)=>a+b,0),
-    color: s.color
-  })).sort((a,b)=>b.tot-a.tot);
-  
-  document.getElementById('rankList').innerHTML = ranked.map((s,i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:28px;height:28px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:#160C10">${i+1}</div>
-        <span>${s.name}</span>
-      </div>
-      <div style="font-family:'Space Grotesk';font-weight:600;color:var(--gold-l)">฿${(s.tot/1e6).toFixed(2)}M</div>
+
+  // Per branch
+  const branchEst = STORES.map(s => {
+    const bRows = curRows.filter(r=>r[s.key]>0);
+    const sellingDays = bRows.length;
+    const mtd = curRows.reduce((a,r)=>a+r[s.key],0);
+    const est = sellingDays>0 ? (mtd/sellingDays)*totalDays : 0;
+    const avgDay = sellingDays>0 ? mtd/sellingDays : 0;
+    return {s, sellingDays, mtd, est, avgDay};
+  }).sort((a,b)=>b.est-a.est);
+
+  const maxEst = Math.max(...branchEst.map(x=>x.est));
+  const maxMtd = Math.max(...branchEst.map(x=>x.mtd));
+
+  document.getElementById('estBranches').innerHTML = branchEst.map(({s,sellingDays,mtd,est,avgDay}) => `
+    <div class="est-card" style="border-color:${s.color}22">
+      <div class="ec-name" style="color:${s.color}">${s.short}</div>
+      <div class="ec-mtd">MTD <b style="color:var(--ivory)">฿${fmtK(Math.round(mtd))}</b></div>
+      <div class="ec-est"><span class="baht">฿</span>${fmt(Math.round(est))}</div>
+      <div class="ec-days"><b>${sellingDays}</b> วันที่ขาย / <b>${totalDays}</b> วัน · เฉลี่ย ฿${fmtK(Math.round(avgDay))}/วัน</div>
+      <div class="ec-prog"><i style="width:${maxEst>0?(est/maxEst*100).toFixed(0):0}%;background:${s.color}"></i></div>
     </div>
   `).join('');
-  
-  // Charts
-  buildCharts(DATA);
-  
-  // Latest
-  const lastDay = DATA.daily[DATA.daily.length-1];
-  const lastDate = new Date(lastDay.date);
-  document.getElementById('latestBadge').textContent = lastDate.toLocaleDateString('th-TH', {weekday:'short'});
-  document.getElementById('latestContent').innerHTML = `
-    <div class="ldate">${lastDate.toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'})}</div>
-    <div class="lbig"><span class="baht">฿</span>${(lastDay.tot/1000).toFixed(0)}K</div>
-    ${DATA.STORES.map(s => `<div class="lrow"><span>${s.name}</span><span>฿${(lastDay[s.key]/1000).toFixed(1)}K</span></div>`).join('')}
-  `;
-  
-  // Table
-  const tbl = document.getElementById('tbl');
-  tbl.querySelector('thead').innerHTML = `<tr><th>Date</th>${DATA.STORES.map(s=>`<th>${s.name.split(' ')[0]}</th>`).join('')}<th>Total</th></tr>`;
-  const tbody = tbl.querySelector('tbody');
-  tbody.innerHTML = DATA.daily.slice(-14).reverse().map((d,i) => {
-    const dateObj = new Date(d.date);
-    return `<tr ${i===0?'class="newest"':''}>
-      <td>${dateObj.toLocaleDateString('th-TH', {month:'short', day:'numeric'})}</td>
-      ${DATA.STORES.map(s => `<td class="${d[s.key]===0?'zero':''}">${d[s.key]>0?(d[s.key]/1000).toFixed(1)+'K':'—'}</td>`).join('')}
-      <td class="tot">${(d.tot/1000).toFixed(1)}K</td>
-    </tr>`;
-  }).join('');
-  
-  // Insights
-  document.getElementById('insightContent').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12.5px">
-      <div style="padding:12px;background:rgba(95,178,138,.12);border-radius:8px;border-left:3px solid var(--good)">
-        <div style="color:var(--muted2);font-size:11px;font-weight:600;text-transform:uppercase">ยอดรวมทั้งงวด</div>
-        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${(totalRev/1e6).toFixed(2)}M</div>
-      </div>
-      <div style="padding:12px;background:rgba(224,139,61,.12);border-radius:8px;border-left:3px solid var(--warn)">
-        <div style="color:var(--muted2);font-size:11px;font-weight:600;text-transform:uppercase">ยอดเฉลี่ยต่อวัน</div>
-        <div style="font-family:'Space Grotesk';font-weight:600;color:#fff;font-size:18px;margin-top:6px">฿${(totalRev/DATA.daily.length/1000).toFixed(0)}K</div>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('foot-tot').innerHTML = `ยอดรวม <b style="color:var(--gold-l);font-family:'Space Grotesk'">฿${(totalRev/1e6).toFixed(2)}M</b> · ${DATA.daily.length} วัน`;
-  
-  // Tab navigation
-  document.querySelectorAll('.stab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelector(`[data-tabpanel="${tab}"]`).classList.add('active');
-    });
-  });
-}
+})();
 
-function buildCharts(DATA) {
-  const cfg = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {labels: {font: {family: "'Space Grotesk'"}, color: '#B79AA2', boxWidth: 12, padding: 12}},
-      filler: {propagate: true}
-    },
-    scales: {
-      x: {grid: {color: 'rgba(255,255,255,0.04)'}, ticks: {color: '#8A6F77', font: {size: 11}}},
-      y: {grid: {color: 'rgba(255,255,255,0.08)'}, ticks: {color: '#8A6F77', font: {family: "'Space Grotesk'"}}}
-    }
-  };
-  
-  // Monthly
-  const mCtx = document.getElementById('monthly')?.getContext('2d');
-  if (mCtx) {
-    new Chart(mCtx, {
-      type: 'line',
-      data: {
-        labels: DATA.months,
-        datasets: DATA.STORES.map(s => ({
-          label: s.name,
-          data: DATA.monthlyData[s.name],
-          borderColor: s.color,
-          backgroundColor: s.color + '22',
-          tension: 0.4,
-          fill: true,
-          borderWidth: 2.5
-        }))
-      },
-      options: cfg
-    });
-  }
-  
-  // Share
-  const sCtx = document.getElementById('share')?.getContext('2d');
-  if (sCtx) {
-    new Chart(sCtx, {
-      type: 'doughnut',
-      data: {
-        labels: DATA.STORES.map(s => s.name),
-        datasets: [{
-          data: DATA.STORES.map(s => DATA.monthlyData[s.name].reduce((a,b)=>a+b,0)),
-          backgroundColor: DATA.STORES.map(s => s.color),
-          borderColor: '#160C10',
-          borderWidth: 2
-        }]
-      },
-      options: {...cfg, plugins: {...cfg.plugins, legend: {...cfg.plugins.legend, position: 'bottom'}}}
-    });
-  }
-  
-  // Daily
-  const dCtx = document.getElementById('daily')?.getContext('2d');
-  if (dCtx) {
-    new Chart(dCtx, {
-      type: 'line',
-      data: {
-        labels: DATA.daily.slice(-30).map(d => new Date(d.date).toLocaleDateString('th-TH', {month:'short', day:'numeric'})),
-        datasets: [{
-          label: 'ยอดรวมรายวัน',
-          data: DATA.daily.slice(-30).map(d => d.tot),
-          borderColor: '#D8B34E',
-          backgroundColor: '#D8B34E33',
-          tension: 0.4,
-          fill: true,
-          borderWidth: 2.5
-        }]
-      },
-      options: cfg
-    });
-  }
-}
+document.getElementById('foot-tot').innerHTML=`ยอดรวมทั้งงวด <b style="color:var(--gold-l);font-family:'Space Grotesk'">฿${fmt(periodTotal)}</b> · 5 สาขา · ${withSales.length} วันทำการ`;
 
-// Start
-loadDashboard();
+} /* end __render */
 </script>
-
-</body>
-</html>
