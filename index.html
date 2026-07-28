@@ -286,17 +286,24 @@ function parseData(rawData) {
   ];
   
   const daily = [];
-  const months = ['Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026'];
+  const months = ['Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026'];
   const monthlyData = {};
   
-  STORES.forEach(s => monthlyData[s.name] = [0,0,0,0,0,0,0]);
+  STORES.forEach(s => monthlyData[s.name] = new Array(months.length).fill(0));
+  
+  // แปลงข้อความที่มีคอมมา เช่น "7,665.00" ให้เป็นตัวเลข 7665
+  const toNum = v => {
+    if (v === null || v === undefined) return 0;
+    const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
   
   // Parse daily data
   rawData.slice(2).forEach(row => {
-    if (!row[0] || row[0].includes('Data will')) return;
+    if (!row[0] || String(row[0]).includes('Data will')) return;
     const d = {date: row[0], tot: 0};
     STORES.forEach(s => {
-      const v = parseFloat(row[s.idx]) || 0;
+      const v = toNum(row[s.idx]);
       d[s.key] = v;
       d.tot += v;
     });
@@ -311,7 +318,7 @@ function parseData(rawData) {
     let idx = -1;
     if (y === 2025 && m === 11) idx = 0;
     else if (y === 2026) idx = m + 1;
-    if (idx >= 0 && idx < 7) {
+    if (idx >= 0 && idx < months.length) {
       STORES.forEach(s => monthlyData[s.name][idx] += d[s.key]);
     }
   });
