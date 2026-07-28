@@ -1,31 +1,47 @@
 import gspread
 from google.oauth2.service_account import Credentials
 import json
+import os
 import sys
 from datetime import datetime
 
 # ========================
-# 1. ดึง SHEET_ID จาก Google Sheet ของคุณ
+# ดึง credentials จาก Environment Variable (ปลอดภัย)
 # ========================
-# ที่ URL ของ Google Sheet: https://docs.google.com/spreadsheets/d/[SHEET_ID]/...
-# SHEET_ID คือส่วนที่ยาว ๆ ตรงกลาง
 SHEET_ID = "1GyYgIOJQjQPuAMWPVRB8TI_C-3KZsBvbV8R_HByFH_8"
-SHEET_NAME = "Summary_Daily"  # ชื่อ sheet
+SHEET_NAME = "Summary_Daily"
 
 def get_sheet_data():
     """ดึงข้อมูลจาก Google Sheet"""
     try:
-        # ใช้ service account key (จะสร้างใน step ต่อไป)
-        creds = Credentials.from_service_account_file(
-            'service_account.json',
+        # อ่าน SERVICE_ACCOUNT_JSON จาก Environment Variable
+        service_account_json = os.environ.get('SERVICE_ACCOUNT_JSON')
+        
+        if not service_account_json:
+            print("❌ Error: SERVICE_ACCOUNT_JSON not found in environment", file=sys.stderr)
+            return None
+        
+        # Parse JSON string
+        creds_dict = json.loads(service_account_json)
+        
+        # สร้าง Credentials จาก dictionary
+        creds = Credentials.from_service_account_info(
+            creds_dict,
             scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
         )
+        
+        # เชื่อมต่อ Google Sheets
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
         data = sheet.get_all_values()
+        
         return data
+        
+    except json.JSONDecodeError as e:
+        print(f"❌ Error: Invalid JSON in SERVICE_ACCOUNT_JSON - {e}", file=sys.stderr)
+        return None
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"❌ Error: {e}", file=sys.stderr)
         return None
 
 def save_to_json(data, filename='data.json'):
@@ -41,5 +57,15 @@ def save_to_json(data, filename='data.json'):
         print("❌ No data to save")
 
 if __name__ == '__main__':
+    print("🔄 Starting update process...")
+    print("📊 Fetching data from Google Sheet...")
+    
     data = get_sheet_data()
-    save_to_json(data)
+    
+    if data:
+        print("✅ Data retrieved successfully!")
+        save_to_json(data)
+        print("✨ Update completed!")
+    else:
+        print("❌ Failed to retrieve data")
+        sys.exit(1)
